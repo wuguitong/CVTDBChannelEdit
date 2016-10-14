@@ -8,8 +8,10 @@
 #include "sqlite3.h"
 #include "CVTDBUtil.h"
 #include "CharTranslate.h"
+#include "afxwin.h"
 
 // CCVTDBChannelEditDlg 对话框
+#define PATH_NAME_HEAD "File : "
 class CCVTDBChannelEditDlg : public CDialogEx
 {
 // 构造
@@ -47,4 +49,5 @@ public:
 	LRESULT OnListClick(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonDelete();
 	afx_msg void OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult);
+	CStatic CStaticPathStr;
 };

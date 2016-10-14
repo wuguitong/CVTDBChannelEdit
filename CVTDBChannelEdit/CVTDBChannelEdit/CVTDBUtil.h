@@ -9,10 +9,20 @@ using namespace std;
 
 #define DEF_INVALID_VALUE           0xFFFFFFFF
 
+typedef enum {
+	TV_TYPE_START,
+	TV_ATV_TYPE = TV_TYPE_START,
+	TV_DTV_TYPE,
+	TV_RADIO_TYPE,
+	TV_DATA_TYPE,
+	TV_TYPE_MAX,
+}TV_TYPE;
+/*
 #define TV_ATV_TYPE					0x00
 #define TV_DTV_TYPE					0x01
 #define TV_RADIO_TYPE				0x02
 #define TV_DATA_TYPE				0x03
+*/
 
 #define ATV_CHANNEL_NO_BYTE_OFFSET        0
 #define ATV_ALL_DATA_START_BYTE_SIZE 13
@@ -96,6 +106,9 @@ typedef struct {
 	unsigned char dtvCheckSum[2];
 	unsigned char dataCheckSum[4];
 	unsigned int sourceDataLen;
+	BYTE tvDtvTypeCountry;
+	BYTE tvRadioTypeCountry;
+	BYTE tvDataTypeCountry;
 }DataBlockInfo;
 typedef struct stChannelInfo{
 	char name[34];

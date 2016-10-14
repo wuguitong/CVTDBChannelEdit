@@ -57,6 +57,7 @@ void CCVTDBChannelEditDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_DB_DATA, ClistCtrlDBData);
+	DDX_Control(pDX, IDC_STATIC_PATH_STR, CStaticPathStr);
 }
 
 BEGIN_MESSAGE_MAP(CCVTDBChannelEditDlg, CDialogEx)
@@ -109,9 +110,9 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化代码
 	USES_CONVERSION;
 	//debug
-	//AllocConsole();
-	//FILE *fp;
-	//freopen_s(&fp, "CONOUT$", "w+t", stdout);
+	AllocConsole();
+	FILE *fp;
+	freopen_s(&fp, "CONOUT$", "w+t", stdout);
 	//debug
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_SUBITEMIMAGES, LVS_EX_SUBITEMIMAGES);
@@ -146,6 +147,8 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	pCVTDBUtil = NULL;
 	pChannelVector = NULL;
 	UpdateList(0);
+	CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD));
+	CStaticPathStr.SetFont(pFont);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -208,6 +211,7 @@ void CCVTDBChannelEditDlg::OnBnClickedOpendb()
 	GetCurrentDirectory(MAX_PATH, path);
 	CFileDialog openFileDlg(TRUE, L"db", NULL, OFN_HIDEREADONLY | OFN_READONLY, filter, NULL);
 	openFileDlg.m_ofn.lpstrInitialDir = path;
+	delete path;
 	INT_PTR result = openFileDlg.DoModal();
 	if (result == IDOK){
 		pCVTDBUtil = CVTDBUtil::GetInstance();
@@ -215,10 +219,23 @@ void CCVTDBChannelEditDlg::OnBnClickedOpendb()
 		pCVTDBUtil->SetDBFilePath(filePath);
 		if (pCVTDBUtil->OpenDb() == TRUE)
 		{
-			pCVTDBUtil->ParseRAWData();
+			result = pCVTDBUtil->ParseRAWData();
 			pCVTDBUtil->CloseDb();
 			pChannelVector = pCVTDBUtil->GetChannelVectorByPos();
 			UpdateList(pChannelVector->size());
+			CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD) + filePath);
+			if ((pChannelVector->size() == 0) && result)
+			{
+				MessageBox(_T("There is no channel!"), _T("Prompt"), MB_OK);
+			}
+			if (!result)
+			{
+				AfxMessageBox(A2T("Open DB Fail!"));
+			}
+		}
+		else
+		{
+			AfxMessageBox(A2T("Open DB Fail!"));
 		}
 	}
 }

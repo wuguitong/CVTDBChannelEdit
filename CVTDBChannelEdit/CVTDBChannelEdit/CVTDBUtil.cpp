@@ -55,12 +55,48 @@ CVTDBUtil::CVTDBUtil()
 	dataBlockInfo.tvCloneDataSize = 0;
 	dataBlockInfo.atvCount = 0;
 	dataBlockInfo.dtvCount = 0;
+	dataBlockInfo.tvDtvTypeCountry = 0;
+	dataBlockInfo.tvRadioTypeCountry = 0;
+	dataBlockInfo.tvDataTypeCountry = 0;
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
 }
 CVTDBUtil::~CVTDBUtil()
 {
+	if (pDbFilePath != NULL)
+	{
+		free(pDbFilePath);
+		pDbFilePath = NULL;
+	}
+	if (dataBlockInfo.pSourceData != NULL)
+	{
+		free(dataBlockInfo.pSourceData);
+		dataBlockInfo.pSourceData = NULL;
+	}
+	if (dataBlockInfo.pDBSaveData != NULL)
+	{
+		free(dataBlockInfo.pDBSaveData);
+		dataBlockInfo.pDBSaveData = NULL;
+	}
+	dataBlockInfo.pTvCloneData = NULL;
+	dataBlockInfo.pAtvChannelData = NULL;
+	dataBlockInfo.pDtvChannelData = NULL;
+	dataBlockInfo.sourceDataLen = 0;
+	dataBlockInfo.atvChannelDataOffset = 0;
+	dataBlockInfo.dtvChannelDataOffset = 0;
+	dataBlockInfo.tvCloneDataOffset = 0;
+	dataBlockInfo.atvChannelDataSize = 0;
+	dataBlockInfo.dtvChannelDataSize = 0;
+	dataBlockInfo.tvCloneDataSize = 0;
+	dataBlockInfo.atvCount = 0;
+	dataBlockInfo.dtvCount = 0;
+	dataBlockInfo.tvDtvTypeCountry = 0;
+	dataBlockInfo.tvRadioTypeCountry = 0;
+	dataBlockInfo.tvDataTypeCountry = 0;
+	pChannelDataDB = NULL;
+	allChannelVector.clear();
+	deleteChannelVector.clear();
 }
 void CVTDBUtil::InitData()
 {
@@ -86,6 +122,10 @@ void CVTDBUtil::InitData()
 	dataBlockInfo.tvCloneDataSize = 0;
 	dataBlockInfo.atvCount = 0;
 	dataBlockInfo.dtvCount = 0;
+	dataBlockInfo.tvDtvTypeCountry = 0;
+	dataBlockInfo.tvRadioTypeCountry = 0;
+	dataBlockInfo.tvDataTypeCountry = 0;
+	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
 }
@@ -104,6 +144,11 @@ void CVTDBUtil::DeleteInstance()
 }
 void CVTDBUtil::SetDBFilePath(CString path)
 {
+	if (pDbFilePath != NULL)
+	{
+		free(pDbFilePath);
+		pDbFilePath = NULL;
+	}
 	pDbFilePath = UnicodeToUtf8(path);	
 }
 char* CVTDBUtil::GetDBFilePath()
@@ -114,6 +159,7 @@ BOOL CVTDBUtil::OpenDb()
 {
 	USES_CONVERSION;
 	if (pDbFilePath == NULL){
+		InitData();
 		AfxMessageBox(A2T("Not Set DB File Path!"));
 		return FALSE;
 	}
@@ -122,6 +168,7 @@ BOOL CVTDBUtil::OpenDb()
 	{
 		return TRUE;
 	}
+	InitData();
 	return FALSE;
 }
 void CVTDBUtil::CloseDb()
@@ -146,9 +193,13 @@ BOOL CVTDBUtil::ParseRAWData()
 			dataBlockInfo.sourceDataLen = size;
 			memcpy((unsigned char *)dataBlockInfo.pSourceData, (unsigned char *)pFileContent, size);
 		}
+		else
+		{
+			InitData();
+		}
 	}
 	else{
-		AfxMessageBox(A2T("Open DB Fail!"));
+		InitData();
 		sqlite3_finalize(stat);
 		return FALSE;
 	}
@@ -161,7 +212,7 @@ BOOL CVTDBUtil::ParseRAWData()
 		(dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSETE]) * TV_CHANNEL_INFO_BYTE_SIZE +
 		DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE;
 	dataBlockInfo.pTvCloneData = &dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset];
-	dataBlockInfo.tvCloneDataSize = dataBlockInfo.sourceDataLen - DATABASE_CHECKSUM_BYTE_SIZE;
+	dataBlockInfo.tvCloneDataSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tvCloneDataOffset  - DATABASE_CHECKSUM_BYTE_SIZE;
 	unsigned int tmpSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tvCloneDataOffset;
 	unsigned int tmpOffset;
 	if (MemFindDataFirstOffset(dataBlockInfo.pTvCloneData, tmpSize, (unsigned char *)ATV_INFO_START_STR, strlen(ATV_INFO_START_STR), tmpOffset))
@@ -169,10 +220,18 @@ BOOL CVTDBUtil::ParseRAWData()
 		dataBlockInfo.pAtvChannelData = &dataBlockInfo.pTvCloneData[tmpOffset];
 		dataBlockInfo.atvChannelDataOffset = tmpOffset + dataBlockInfo.tvCloneDataOffset;
 	}
+	else
+	{
+		return FALSE;
+	}
 	if (MemFindDataFirstOffset(dataBlockInfo.pTvCloneData, tmpSize, (unsigned char *)DTV_INFO_START_STR, strlen(DTV_INFO_START_STR), tmpOffset))
 	{
 		dataBlockInfo.pDtvChannelData = &dataBlockInfo.pTvCloneData[tmpOffset];
 		dataBlockInfo.dtvChannelDataOffset = tmpOffset + dataBlockInfo.tvCloneDataOffset;
+	}
+	else
+	{
+		return FALSE;
 	}
 	if (!ParseATVData())
 	{
@@ -226,6 +285,10 @@ BOOL CVTDBUtil::ParseATVData()
 	{
 		dataBlockInfo.atvChannelDataSize = (pTmpData - dataBlockInfo.pSourceData) - dataBlockInfo.atvChannelDataOffset;
 	}
+	else
+	{
+		dataBlockInfo.atvChannelDataSize = ATV_ALL_DATA_START_BYTE_SIZE + ATV_CHANNEL_COUNT_BYTE_SIZE + ATV_CHECKSUM_BYTE_SIZE;
+	}
 	return TRUE;
 }
 BOOL CVTDBUtil::ParseDTVData()
@@ -270,6 +333,39 @@ BOOL CVTDBUtil::ParseDTVData()
 	{
 		dataBlockInfo.dtvChannelDataSize = (pTmpData - dataBlockInfo.pSourceData) - dataBlockInfo.dtvChannelDataOffset;
 	}
+	else
+	{
+		dataBlockInfo.dtvChannelDataSize = DTV_ALL_DATA_START_BYTE_SIZE + DTV_CHANNEL_COUNT_BYTE_SIZE + DTV_CHECKSUM_BYTE_SIZE;
+	}
+	//get country
+	unsigned int i = 0, dtvCountryOffset = 0;
+	int tvType = TV_DTV_TYPE;
+	dtvCountryOffset = DTV_ALL_DATA_START_BYTE_SIZE + DTV_CHANNEL_COUNT_BYTE_SIZE + DTV_CHECKSUM_BYTE_SIZE;
+	for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_MAX; tvType++)
+	{
+		for (i = 0; i < allChannelVector.size(); i++)
+		{
+			if (allChannelVector[i].channelType == tvType)
+			{
+				dtvCountryOffset += allChannelVector[i].dbChannelItemDataSize;
+			}
+		}
+		switch (tvType)
+		{
+		case TV_DTV_TYPE:
+			dataBlockInfo.tvDtvTypeCountry = dataBlockInfo.pDtvChannelData[dtvCountryOffset];
+			break;
+		case TV_RADIO_TYPE:
+			dataBlockInfo.tvRadioTypeCountry = dataBlockInfo.pDtvChannelData[dtvCountryOffset];
+			break;
+		case TV_DATA_TYPE:
+			dataBlockInfo.tvDataTypeCountry = dataBlockInfo.pDtvChannelData[dtvCountryOffset];
+			break;
+		default:
+			break;
+		}
+		dtvCountryOffset++;
+	}
 	return TRUE;
 }
 BOOL CVTDBUtil::SaveDataToDb()
@@ -293,19 +389,24 @@ BOOL CVTDBUtil::SaveDataToDb()
 		for (i = 0; i < deleteChannelVector.size(); i++)
 		{
 			deleteChannelSize += deleteChannelVector[i].dbChannelItemDataSize;
+			printf("%d deleteChannelSize = %d \n",i, deleteChannelSize);
 		}
 		if (dataBlockInfo.pDBSaveData != NULL)
 		{
 			free(dataBlockInfo.pDBSaveData);
 			dataBlockInfo.pDBSaveData = NULL;
 		}
+		printf("1nowSaveDataOffset = %d \n", nowSaveDataOffset);
+		printf("source len = %d     new len = %d\n", dataBlockInfo.sourceDataLen ,dataBlockInfo.sourceDataLen - deleteChannelSize);
 		dataBlockInfo.pDBSaveData = (unsigned char *)malloc(dataBlockInfo.sourceDataLen - deleteChannelSize);
 		//copy before clone data
 		memcpy(dataBlockInfo.pDBSaveData,dataBlockInfo.pSourceData,dataBlockInfo.tvCloneDataOffset);
 		nowSaveDataOffset += dataBlockInfo.tvCloneDataOffset;
+		printf("2nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy before atv data
 		memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), &(dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset]), dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset);
 		nowSaveDataOffset += dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset;
+		printf("3nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy atv
 		sort(allChannelVector.begin(), allChannelVector.end(), SortByAtvIndex);
 		unsigned int atvStartStrLen, atvEndStrLen, atvDataStartOffset = 0, atvByteCountOffset = 0, atvByteCheckSumOffset = 0, atvByteCount = 0, atvCheckSum = 0;
@@ -316,6 +417,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 		atvByteCountOffset = nowSaveDataOffset - ATV_CHECKSUM_BYTE_SIZE - ATV_CHANNEL_COUNT_BYTE_SIZE;
 		atvByteCheckSumOffset = nowSaveDataOffset - ATV_CHECKSUM_BYTE_SIZE;
 		atvDataStartOffset = nowSaveDataOffset;
+		printf("4nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		for (i = 0; i < allChannelVector.size(); i++)
 		{
 			if (allChannelVector[i].channelType != TV_ATV_TYPE)
@@ -348,6 +450,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 
 			memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), pTmpData, allChannelVector[i].dbChannelItemDataSize);
 			nowSaveDataOffset += allChannelVector[i].dbChannelItemDataSize;
+			printf("5nowSaveDataOffset = %d \n", nowSaveDataOffset);
 			atvByteCount += allChannelVector[i].dbChannelItemDataSize;
 			free(pTmpData);
 
@@ -366,6 +469,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 		//copy between 
 		memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), &(dataBlockInfo.pSourceData[dataBlockInfo.atvChannelDataOffset + dataBlockInfo.atvChannelDataSize]), dataBlockInfo.dtvChannelDataOffset - dataBlockInfo.atvChannelDataOffset - dataBlockInfo.atvChannelDataSize);
 		nowSaveDataOffset += dataBlockInfo.dtvChannelDataOffset - dataBlockInfo.atvChannelDataOffset - dataBlockInfo.atvChannelDataSize;
+		printf("6nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy dtv
 		sort(allChannelVector.begin(), allChannelVector.end(), SortByDtvIndex);
 		unsigned int dtvStartStrLen, dtvEndStrLen, dtvDataStartOffset = 0, dtvByteCountOffset = 0, dtvByteCheckSumOffset = 0, dtvByteCount = 0, dtvCheckSum = 0;
@@ -376,38 +480,66 @@ BOOL CVTDBUtil::SaveDataToDb()
 		dtvByteCountOffset = nowSaveDataOffset - DTV_CHANNEL_COUNT_BYTE_SIZE - DTV_CHECKSUM_BYTE_SIZE;
 		dtvByteCheckSumOffset = nowSaveDataOffset - DTV_CHECKSUM_BYTE_SIZE;
 		dtvDataStartOffset = nowSaveDataOffset;
-		for (i = 0; i < allChannelVector.size(); i++)
+		printf("7nowSaveDataOffset = %d \n", nowSaveDataOffset);
+		int tvType = TV_DTV_TYPE;
+		for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_MAX; tvType++)
 		{
-			if (allChannelVector[i].channelType == TV_ATV_TYPE)
+			for (i = 0; i < allChannelVector.size(); i++)
 			{
+				if (allChannelVector[i].channelType == TV_ATV_TYPE)
+				{
+					break;
+				}
+				if (allChannelVector[i].channelType == tvType)
+				{
+					pTmpData = (unsigned char *)malloc(allChannelVector[i].dbChannelItemDataSize);
+					memcpy(pTmpData, &(dataBlockInfo.pSourceData[allChannelVector[i].dbChannelItemDataOffset]), allChannelVector[i].dbChannelItemDataSize);
+					memcpy(&pTmpData[dtvStartStrLen + DTV_CHANNEL_NAME_BYTE_OFFSET], allChannelVector[i].name, DTV_CHANNEL_NAME_BYTE_SIZE);
+					if (allChannelVector[i].isLock)
+					{
+						pTmpData[dtvStartStrLen + DTV_CHANNEL_LOCK_BYTE_OFFSET] |= DTV_CHANNEL_IS_LOCK;
+					}
+					else
+					{
+						pTmpData[dtvStartStrLen + DTV_CHANNEL_LOCK_BYTE_OFFSET] &= ~DTV_CHANNEL_IS_LOCK;
+					}
+					if (allChannelVector[i].isSkip)
+					{
+						pTmpData[dtvStartStrLen + DTV_CHANNEL_SKIP_BYTE_OFFSET] |= DTV_CHANNEL_IS_SKIP;
+					}
+					else
+					{
+						pTmpData[dtvStartStrLen + DTV_CHANNEL_SKIP_BYTE_OFFSET] &= ~DTV_CHANNEL_IS_SKIP;
+					}
+					pTmpData[dtvStartStrLen + DTV_CHANNEL_POS_HIGH_BYTE_OFFSET] = allChannelVector[i].channelPos / 256;
+					pTmpData[dtvStartStrLen + DTV_CHANNEL_POS_LOW_BYTE_OFFSET] = allChannelVector[i].channelPos % 256;
+					memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), pTmpData, allChannelVector[i].dbChannelItemDataSize);
+					nowSaveDataOffset += allChannelVector[i].dbChannelItemDataSize;
+					printf("8nowSaveDataOffset = %d \n", nowSaveDataOffset);
+					dtvByteCount += allChannelVector[i].dbChannelItemDataSize;
+					free(pTmpData);
+				}
+			}
+			switch (tvType)
+			{
+			case TV_DTV_TYPE:
+				dataBlockInfo.pDBSaveData[nowSaveDataOffset] = dataBlockInfo.tvDtvTypeCountry;
+				nowSaveDataOffset++;
+				dtvByteCount++;
+				break;
+			case TV_RADIO_TYPE:
+				dataBlockInfo.pDBSaveData[nowSaveDataOffset] = dataBlockInfo.tvRadioTypeCountry;
+				nowSaveDataOffset++;
+				dtvByteCount++;
+				break;
+			case TV_DATA_TYPE:
+				dataBlockInfo.pDBSaveData[nowSaveDataOffset] = dataBlockInfo.tvDataTypeCountry;
+				nowSaveDataOffset++;
+				dtvByteCount++;
+				break;
+			default:
 				break;
 			}
-			pTmpData = (unsigned char *)malloc(allChannelVector[i].dbChannelItemDataSize);
-			memcpy(pTmpData, &(dataBlockInfo.pSourceData[allChannelVector[i].dbChannelItemDataOffset]), allChannelVector[i].dbChannelItemDataSize);
-			memcpy(&pTmpData[dtvStartStrLen + DTV_CHANNEL_NAME_BYTE_OFFSET], allChannelVector[i].name, DTV_CHANNEL_NAME_BYTE_SIZE);
-			if (allChannelVector[i].isLock)
-			{
-				pTmpData[dtvStartStrLen + DTV_CHANNEL_LOCK_BYTE_OFFSET] |= DTV_CHANNEL_IS_LOCK;
-			}
-			else
-			{
-				pTmpData[dtvStartStrLen + DTV_CHANNEL_LOCK_BYTE_OFFSET] &= ~DTV_CHANNEL_IS_LOCK;
-			}
-			if (allChannelVector[i].isSkip)
-			{
-				pTmpData[dtvStartStrLen + DTV_CHANNEL_SKIP_BYTE_OFFSET] |= DTV_CHANNEL_IS_SKIP;
-			}
-			else
-			{
-				pTmpData[dtvStartStrLen + DTV_CHANNEL_SKIP_BYTE_OFFSET] &= ~DTV_CHANNEL_IS_SKIP;
-			}
-			pTmpData[dtvStartStrLen + DTV_CHANNEL_POS_HIGH_BYTE_OFFSET] = allChannelVector[i].channelPos / 256;
-			pTmpData[dtvStartStrLen + DTV_CHANNEL_POS_LOW_BYTE_OFFSET] = allChannelVector[i].channelPos % 256;
-			memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), pTmpData, allChannelVector[i].dbChannelItemDataSize);
-			nowSaveDataOffset += allChannelVector[i].dbChannelItemDataSize;
-			dtvByteCount += allChannelVector[i].dbChannelItemDataSize;
-			free(pTmpData);
-
 		}
 		dtvCheckSum = TVCalCheckSum(&(dataBlockInfo.pDBSaveData[dtvDataStartOffset]), dtvByteCount);
 		for (i = 1; i <= DTV_CHECKSUM_BYTE_SIZE; i++)
@@ -415,6 +547,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 			dataBlockInfo.pDBSaveData[dtvByteCheckSumOffset + DTV_CHECKSUM_BYTE_SIZE - i] = dtvCheckSum % 256;
 			dtvCheckSum /= 256;
 		}
+		dtvByteCount -= 2;//country 只算了一个 所以减去2
 		for (i = 1; i <= DTV_CHANNEL_COUNT_BYTE_SIZE; i++)
 		{
 			dataBlockInfo.pDBSaveData[dtvByteCountOffset + DTV_CHANNEL_COUNT_BYTE_SIZE -i] = dtvByteCount % 256;
@@ -424,7 +557,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 		dataCheckSum = DataCalCheckSum(dataBlockInfo.pDBSaveData, dataBlockInfo.sourceDataLen - deleteChannelSize - DATABASE_CHECKSUM_BYTE_SIZE);
 		for (i = 1; i <= DATABASE_CHECKSUM_BYTE_SIZE; i++)
 		{
-			dataBlockInfo.pDBSaveData[dataBlockInfo.sourceDataLen - deleteChannelSize  - i] = dataCheckSum % 256;
+			dataBlockInfo.pDBSaveData[dataBlockInfo.sourceDataLen - deleteChannelSize - i] = dataCheckSum % 256;
 			dataCheckSum /= 256;
 		}
 
@@ -447,7 +580,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 			result = FALSE;
 		}
 		sqlite3_finalize(stat);
-
 		//free
 		if (dataBlockInfo.pDBSaveData != NULL)
 		{
@@ -460,7 +592,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 }
 ChannelVector* CVTDBUtil::GetChannelVectorByPos()
 {
-	sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
+	//sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
 	return &allChannelVector;
 }
 unsigned int CVTDBUtil::DeleteSelectChannel()
