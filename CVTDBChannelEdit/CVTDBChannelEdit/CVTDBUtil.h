@@ -10,12 +10,16 @@ using namespace std;
 #define DEF_INVALID_VALUE           0xFFFFFFFF
 
 typedef enum {
+	BOARD_T_MSD30X_B55TA_TYPE ,
+	BOARD_TYPE_NONE,
+}BOARD_TYPE;
+typedef enum {
 	TV_TYPE_START,
 	TV_ATV_TYPE = TV_TYPE_START,
 	TV_DTV_TYPE,
 	TV_RADIO_TYPE,
 	TV_DATA_TYPE,
-	TV_TYPE_MAX,
+	TV_TYPE_END,
 }TV_TYPE;
 /*
 #define TV_ATV_TYPE					0x00
@@ -23,6 +27,7 @@ typedef enum {
 #define TV_RADIO_TYPE				0x02
 #define TV_DATA_TYPE				0x03
 */
+
 
 #define ATV_CHANNEL_NO_BYTE_OFFSET        0
 #define ATV_ALL_DATA_START_BYTE_SIZE 13
@@ -78,6 +83,9 @@ typedef enum {
 #define ATV_ITEM_INFO_END_STR              "_END_"
 #define DTV_ITEM_INFO_START_STR            "DTVCH"
 #define DTV_ITEM_INFO_END_STR              "_END_"
+
+#define BOARD_T_MSD30X_B55TA_STR     "T_MSD30X_B55TA"
+
 typedef enum {
 	DATA_TYPE_START,
 	CHANNEL_SELECT = DATA_TYPE_START,
@@ -89,6 +97,7 @@ typedef enum {
 	DATA_TYPE_END,
 }TAB_ROW_TYPE;
 typedef struct {
+	BOARD_TYPE boardType;
 	unsigned int tvCloneDataOffset;
 	unsigned int tvCloneDataSize;
 	unsigned int atvChannelDataOffset;
@@ -143,6 +152,7 @@ class CVTDBUtil
 		char* GetDBFilePath();
 		unsigned int DeleteSelectChannel();
 		BOOL UpdateAtvChannelNo();
+		BOARD_TYPE GetBoardType();
 	private:
 		static CVTDBUtil* pCVTDBUtil;
 		char* pDbFilePath;

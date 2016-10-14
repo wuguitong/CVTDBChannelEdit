@@ -61,6 +61,7 @@ CVTDBUtil::CVTDBUtil()
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	dataBlockInfo.boardType = BOARD_TYPE_NONE;
 }
 CVTDBUtil::~CVTDBUtil()
 {
@@ -97,6 +98,7 @@ CVTDBUtil::~CVTDBUtil()
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	dataBlockInfo.boardType = BOARD_TYPE_NONE;
 }
 void CVTDBUtil::InitData()
 {
@@ -128,6 +130,7 @@ void CVTDBUtil::InitData()
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	dataBlockInfo.boardType = BOARD_TYPE_NONE;
 }
 CVTDBUtil* CVTDBUtil::GetInstance()
 {
@@ -192,6 +195,12 @@ BOOL CVTDBUtil::ParseRAWData()
 			dataBlockInfo.pSourceData = (unsigned char *)malloc(size);
 			dataBlockInfo.sourceDataLen = size;
 			memcpy((unsigned char *)dataBlockInfo.pSourceData, (unsigned char *)pFileContent, size);
+			unsigned int tmpOffset;
+			if (MemFindDataFirstOffset(dataBlockInfo.pSourceData, dataBlockInfo.sourceDataLen, (unsigned char *)BOARD_T_MSD30X_B55TA_STR, strlen(BOARD_T_MSD30X_B55TA_STR), tmpOffset))
+			{
+				dataBlockInfo.boardType = BOARD_T_MSD30X_B55TA_TYPE;
+				printf("BOARD_T_MSD30X_B55TA_TYPE\n");
+			}
 		}
 		else
 		{
@@ -341,7 +350,7 @@ BOOL CVTDBUtil::ParseDTVData()
 	unsigned int i = 0, dtvCountryOffset = 0;
 	int tvType = TV_DTV_TYPE;
 	dtvCountryOffset = DTV_ALL_DATA_START_BYTE_SIZE + DTV_CHANNEL_COUNT_BYTE_SIZE + DTV_CHECKSUM_BYTE_SIZE;
-	for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_MAX; tvType++)
+	for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_END; tvType++)
 	{
 		for (i = 0; i < allChannelVector.size(); i++)
 		{
@@ -482,7 +491,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 		dtvDataStartOffset = nowSaveDataOffset;
 		printf("7nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		int tvType = TV_DTV_TYPE;
-		for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_MAX; tvType++)
+		for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_END; tvType++)
 		{
 			for (i = 0; i < allChannelVector.size(); i++)
 			{
@@ -684,7 +693,10 @@ BOOL CVTDBUtil::UpdateAtvChannelNo()
 	sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
 	return TRUE;
 }
-
+BOARD_TYPE CVTDBUtil::GetBoardType()
+{
+	return dataBlockInfo.boardType;
+}
 unsigned int CVTDBUtil::TVCalCheckSum(BYTE *pBuf, DWORD wBufLen)
 {
 	unsigned int CheckSum;
