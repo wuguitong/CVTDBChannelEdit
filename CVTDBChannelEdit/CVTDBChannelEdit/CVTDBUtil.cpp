@@ -199,7 +199,6 @@ BOOL CVTDBUtil::ParseRAWData()
 			if (MemFindDataFirstOffset(dataBlockInfo.pSourceData, dataBlockInfo.sourceDataLen, (unsigned char *)BOARD_T_MSD30X_B55TA_STR, strlen(BOARD_T_MSD30X_B55TA_STR), tmpOffset))
 			{
 				dataBlockInfo.boardType = BOARD_T_MSD30X_B55TA_TYPE;
-				printf("BOARD_T_MSD30X_B55TA_TYPE\n");
 			}
 		}
 		else
@@ -398,24 +397,19 @@ BOOL CVTDBUtil::SaveDataToDb()
 		for (i = 0; i < deleteChannelVector.size(); i++)
 		{
 			deleteChannelSize += deleteChannelVector[i].dbChannelItemDataSize;
-			printf("%d deleteChannelSize = %d \n",i, deleteChannelSize);
 		}
 		if (dataBlockInfo.pDBSaveData != NULL)
 		{
 			free(dataBlockInfo.pDBSaveData);
 			dataBlockInfo.pDBSaveData = NULL;
 		}
-		printf("1nowSaveDataOffset = %d \n", nowSaveDataOffset);
-		printf("source len = %d     new len = %d\n", dataBlockInfo.sourceDataLen ,dataBlockInfo.sourceDataLen - deleteChannelSize);
 		dataBlockInfo.pDBSaveData = (unsigned char *)malloc(dataBlockInfo.sourceDataLen - deleteChannelSize);
 		//copy before clone data
 		memcpy(dataBlockInfo.pDBSaveData,dataBlockInfo.pSourceData,dataBlockInfo.tvCloneDataOffset);
 		nowSaveDataOffset += dataBlockInfo.tvCloneDataOffset;
-		printf("2nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy before atv data
 		memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), &(dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset]), dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset);
 		nowSaveDataOffset += dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset;
-		printf("3nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy atv
 		sort(allChannelVector.begin(), allChannelVector.end(), SortByAtvIndex);
 		unsigned int atvStartStrLen, atvEndStrLen, atvDataStartOffset = 0, atvByteCountOffset = 0, atvByteCheckSumOffset = 0, atvByteCount = 0, atvCheckSum = 0;
@@ -426,7 +420,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 		atvByteCountOffset = nowSaveDataOffset - ATV_CHECKSUM_BYTE_SIZE - ATV_CHANNEL_COUNT_BYTE_SIZE;
 		atvByteCheckSumOffset = nowSaveDataOffset - ATV_CHECKSUM_BYTE_SIZE;
 		atvDataStartOffset = nowSaveDataOffset;
-		printf("4nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		for (i = 0; i < allChannelVector.size(); i++)
 		{
 			if (allChannelVector[i].channelType != TV_ATV_TYPE)
@@ -459,7 +452,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 
 			memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), pTmpData, allChannelVector[i].dbChannelItemDataSize);
 			nowSaveDataOffset += allChannelVector[i].dbChannelItemDataSize;
-			printf("5nowSaveDataOffset = %d \n", nowSaveDataOffset);
 			atvByteCount += allChannelVector[i].dbChannelItemDataSize;
 			free(pTmpData);
 
@@ -478,7 +470,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 		//copy between 
 		memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), &(dataBlockInfo.pSourceData[dataBlockInfo.atvChannelDataOffset + dataBlockInfo.atvChannelDataSize]), dataBlockInfo.dtvChannelDataOffset - dataBlockInfo.atvChannelDataOffset - dataBlockInfo.atvChannelDataSize);
 		nowSaveDataOffset += dataBlockInfo.dtvChannelDataOffset - dataBlockInfo.atvChannelDataOffset - dataBlockInfo.atvChannelDataSize;
-		printf("6nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		//copy dtv
 		sort(allChannelVector.begin(), allChannelVector.end(), SortByDtvIndex);
 		unsigned int dtvStartStrLen, dtvEndStrLen, dtvDataStartOffset = 0, dtvByteCountOffset = 0, dtvByteCheckSumOffset = 0, dtvByteCount = 0, dtvCheckSum = 0;
@@ -489,7 +480,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 		dtvByteCountOffset = nowSaveDataOffset - DTV_CHANNEL_COUNT_BYTE_SIZE - DTV_CHECKSUM_BYTE_SIZE;
 		dtvByteCheckSumOffset = nowSaveDataOffset - DTV_CHECKSUM_BYTE_SIZE;
 		dtvDataStartOffset = nowSaveDataOffset;
-		printf("7nowSaveDataOffset = %d \n", nowSaveDataOffset);
 		int tvType = TV_DTV_TYPE;
 		for (tvType = TV_DTV_TYPE; tvType < TV_TYPE_END; tvType++)
 		{
@@ -524,7 +514,6 @@ BOOL CVTDBUtil::SaveDataToDb()
 					pTmpData[dtvStartStrLen + DTV_CHANNEL_POS_LOW_BYTE_OFFSET] = allChannelVector[i].channelPos % 256;
 					memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), pTmpData, allChannelVector[i].dbChannelItemDataSize);
 					nowSaveDataOffset += allChannelVector[i].dbChannelItemDataSize;
-					printf("8nowSaveDataOffset = %d \n", nowSaveDataOffset);
 					dtvByteCount += allChannelVector[i].dbChannelItemDataSize;
 					free(pTmpData);
 				}
