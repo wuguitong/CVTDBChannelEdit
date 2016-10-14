@@ -163,7 +163,6 @@ BOOL CVTDBUtil::OpenDb()
 	USES_CONVERSION;
 	if (pDbFilePath == NULL){
 		InitData();
-		AfxMessageBox(A2T("Not Set DB File Path!"));
 		return FALSE;
 	}
 	int rc = sqlite3_open(pDbFilePath, &pChannelDataDB);
@@ -385,13 +384,11 @@ BOOL CVTDBUtil::SaveDataToDb()
 	unsigned int dataCheckSum = 0,nowSaveDataOffset = 0,deleteChannelSize = 0;
 	if (pChannelDataDB == NULL)
 	{
-		AfxMessageBox(A2T("No DB Open!"));
 		return FALSE;
 	}
 	else
 	{
 		if (pDbFilePath == NULL){
-			AfxMessageBox(A2T("Not Set DB File Path!"));
 			return FALSE;
 		}
 		for (i = 0; i < deleteChannelVector.size(); i++)
@@ -590,7 +587,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 }
 ChannelVector* CVTDBUtil::GetChannelVectorByPos()
 {
-	//sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
+	sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
 	return &allChannelVector;
 }
 unsigned int CVTDBUtil::DeleteSelectChannel()
