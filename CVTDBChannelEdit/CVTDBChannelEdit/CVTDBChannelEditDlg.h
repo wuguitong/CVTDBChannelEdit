@@ -42,6 +42,7 @@ public:
 	CQuickList ClistCtrlDBData;
 	ChannelVector* pChannelVector;
 	CVTDBUtil* pCVTDBUtil;
+	CStatic CStaticPathStr;
 	void UpdateList(int itemCount);
 	afx_msg void OnBnClickedOpendb();
 	afx_msg void OnBnClickedSavedb();
@@ -49,5 +50,5 @@ public:
 	LRESULT OnListClick(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonDelete();
 	afx_msg void OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult);
-	CStatic CStaticPathStr;
+	BOOL CStringIsAscii(CString str);
 };

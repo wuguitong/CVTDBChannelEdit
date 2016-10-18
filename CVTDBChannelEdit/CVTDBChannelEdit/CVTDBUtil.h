@@ -70,9 +70,24 @@ typedef enum {
 #define FM_CHANNEL_COUNT_BYTE_SIZE          2
 
 #define TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET  14
-#define TV_CHANNEL_COUNT_LOW_BYTE_OFFSETE   15
+#define TV_CHANNEL_COUNT_LOW_BYTE_OFFSET   15
 #define TV_CHANNEL_INFO_BYTE_SIZE                40
 #define TV_CHANNEL_COUNT_BYTE_SIZE          2
+
+#define TV_CHANNEL_INFO_SERVICE_TYPE_BYTE_OFFSET        0
+#define TV_CHANNEL_INFO_MAJOR_CHANNO_HIGH_BYTE_OFFSET   1
+#define TV_CHANNEL_INFO_MAJOR_CHANNO_LOW_BYTE_OFFSET    2
+#define TV_CHANNEL_INFO_MINOR_CHANNO_HIGH_BYTE_OFFSET   3
+#define TV_CHANNEL_INFO_MINOR_CHANNO_LOW_BYTE_OFFSET    4
+#define TV_CHANNEL_INFO_IS_SECURE_BYTE_OFFSET           5
+#define TV_CHANNEL_INFO_IS_PROME_BYTE_OFFSET            6
+#define TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET              7
+#define TV_CHANNEL_INFO_CHNAME_BYTE_SIZE                33
+#define TV_CHANNEL_INFO_IS_SECURE_DATA                  0x10
+#define TV_CHANNEL_INFO_NOT_SECURE_DATA                 0x00
+
+#define TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO            0
+#define TV_CHANNEL_INFO_DEFAULT_IS_PROME                0
 
 #define ATV_CHANNEL_DATA_BYTE_SIZE               28
 #define DTV_CHANNEL_DATA_BYTE_SIZE               212
@@ -115,6 +130,9 @@ typedef struct {
 	unsigned char dtvCheckSum[2];
 	unsigned char dataCheckSum[4];
 	unsigned int sourceDataLen;
+	unsigned int tvSecureChannelMajor;
+	unsigned int tvSecureChannelMinor;
+	BYTE tvSecureChannelEnable;
 	BYTE tvDtvTypeCountry;
 	BYTE tvRadioTypeCountry;
 	BYTE tvDataTypeCountry;
@@ -128,11 +146,12 @@ typedef struct stChannelInfo{
 	unsigned int indexForDtv;
 	unsigned int atvChannelNo;
 	unsigned int channelPos;
+	unsigned int channelOldPos;
 	unsigned int channelType;
 	unsigned int dbChannelItemDataOffset;
 	unsigned int dbChannelItemDataSize;
 	stChannelInfo():isSkip(false), isLock(false),isSelect(false), indexForAtv(DEF_INVALID_VALUE), indexForDtv(DEF_INVALID_VALUE),
-		atvChannelNo(DEF_INVALID_VALUE), channelPos(DEF_INVALID_VALUE), channelType(DEF_INVALID_VALUE), dbChannelItemDataOffset(DEF_INVALID_VALUE), dbChannelItemDataSize(0){};
+		atvChannelNo(DEF_INVALID_VALUE), channelPos(DEF_INVALID_VALUE), channelOldPos(DEF_INVALID_VALUE), channelType(DEF_INVALID_VALUE), dbChannelItemDataOffset(DEF_INVALID_VALUE), dbChannelItemDataSize(0){};
 }ChannelInfo;
 typedef vector<ChannelInfo> ChannelVector;
 class CVTDBUtil

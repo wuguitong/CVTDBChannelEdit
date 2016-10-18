@@ -475,9 +475,13 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 		}
 		else
 		{
-			if (strlen(T2A(str.GetBuffer())) > DTV_CHANNEL_NAME_BYTE_SIZE)
+			if (strlen(T2A(str.GetBuffer())) > ATV_CHANNEL_NAME_BYTE_SIZE)
 			{
 				AfxMessageBox(A2T("Name is too long,edit fail!"));
+			}
+			else if (!CStringIsAscii(str))
+			{
+				AfxMessageBox(A2T("ATV Name should be Ascii"));
 			}
 			else
 			{
@@ -489,4 +493,20 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 	default:
 		break;
 	}
+}
+BOOL CCVTDBChannelEditDlg::CStringIsAscii(CString str)
+{
+	USES_CONVERSION;
+	char * pStr = T2A(str.GetBuffer());
+	int len = strlen(pStr);
+	printf("len  %d\n", len);
+	for (int i = 0; i < len; i++)
+	{
+		printf("%c  %d\n", pStr[i], pStr[i]);
+		if (pStr[i] < 0 || pStr[i]>127)
+		{
+			return FALSE;
+		}
+	}
+	return TRUE;
 }

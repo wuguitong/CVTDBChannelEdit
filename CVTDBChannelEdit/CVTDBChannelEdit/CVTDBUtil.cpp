@@ -58,6 +58,9 @@ CVTDBUtil::CVTDBUtil()
 	dataBlockInfo.tvDtvTypeCountry = 0;
 	dataBlockInfo.tvRadioTypeCountry = 0;
 	dataBlockInfo.tvDataTypeCountry = 0;
+	dataBlockInfo.tvSecureChannelMajor = 0;
+	dataBlockInfo.tvSecureChannelMinor = 0;
+	dataBlockInfo.tvSecureChannelEnable = 0;
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
@@ -95,6 +98,9 @@ CVTDBUtil::~CVTDBUtil()
 	dataBlockInfo.tvDtvTypeCountry = 0;
 	dataBlockInfo.tvRadioTypeCountry = 0;
 	dataBlockInfo.tvDataTypeCountry = 0;
+	dataBlockInfo.tvSecureChannelMajor = 0;
+	dataBlockInfo.tvSecureChannelMinor = 0;
+	dataBlockInfo.tvSecureChannelEnable = 0;
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
@@ -127,7 +133,9 @@ void CVTDBUtil::InitData()
 	dataBlockInfo.tvDtvTypeCountry = 0;
 	dataBlockInfo.tvRadioTypeCountry = 0;
 	dataBlockInfo.tvDataTypeCountry = 0;
-	pChannelDataDB = NULL;
+	dataBlockInfo.tvSecureChannelMajor = 0;
+	dataBlockInfo.tvSecureChannelMinor = 0;
+	dataBlockInfo.tvSecureChannelEnable = 0;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
 	dataBlockInfo.boardType = BOARD_TYPE_NONE;
@@ -184,11 +192,41 @@ void CVTDBUtil::CloseDb()
 BOOL CVTDBUtil::ParseRAWData()
 {
 	USES_CONVERSION;
+	InitData();
 	sqlite3_stmt *stat = 0;
+	if (sqlite3_prepare(pChannelDataDB, "select DATA from SETTINGS where FIELDNAME='SecureChannelEnabled'", -1, &stat, 0) == SQLITE_OK){
+		if (sqlite3_step(stat) == SQLITE_ROW)
+		{
+			const void * pFileContent = sqlite3_column_blob(stat, 0);
+			const int size = sqlite3_column_bytes(stat, 0);
+			dataBlockInfo.tvSecureChannelEnable = ((unsigned char*)pFileContent)[0];
+			printf("%d\n", dataBlockInfo.tvSecureChannelEnable);
+		}
+	}
+	sqlite3_finalize(stat);
+	if (sqlite3_prepare(pChannelDataDB, "select DATA from SETTINGS where FIELDNAME='SecureChannelMajor'", -1, &stat, 0) == SQLITE_OK){
+		if (sqlite3_step(stat) == SQLITE_ROW)
+		{
+			const void * pFileContent = sqlite3_column_blob(stat, 0);
+			const int size = sqlite3_column_bytes(stat, 0);
+			dataBlockInfo.tvSecureChannelMajor = ((unsigned char*)pFileContent)[0] * 256 + ((unsigned char*)pFileContent)[1];
+			printf("%d\n", dataBlockInfo.tvSecureChannelMajor);
+		}
+	}
+	sqlite3_finalize(stat);
+	if (sqlite3_prepare(pChannelDataDB, "select DATA from SETTINGS where FIELDNAME='SecureChannelMinor'", -1, &stat, 0) == SQLITE_OK){
+		if (sqlite3_step(stat) == SQLITE_ROW)
+		{
+			const void * pFileContent = sqlite3_column_blob(stat, 0);
+			const int size = sqlite3_column_bytes(stat, 0);
+			dataBlockInfo.tvSecureChannelMinor = ((unsigned char*)pFileContent)[0] * 256 + ((unsigned char*)pFileContent)[1];
+			printf("%d\n", dataBlockInfo.tvSecureChannelMinor);
+		}
+	}
+	sqlite3_finalize(stat);
 	if (sqlite3_prepare(pChannelDataDB, "select DATA from SETTINGS where FIELDNAME='TunerRawData'", -1, &stat, 0) == SQLITE_OK){
 		if (sqlite3_step(stat) == SQLITE_ROW)
 		{
-			InitData();
 			const void * pFileContent = sqlite3_column_blob(stat, 0);
 			const int size = sqlite3_column_bytes(stat, 0);
 			dataBlockInfo.pSourceData = (unsigned char *)malloc(size);
@@ -200,13 +238,8 @@ BOOL CVTDBUtil::ParseRAWData()
 				dataBlockInfo.boardType = BOARD_T_MSD30X_B55TA_TYPE;
 			}
 		}
-		else
-		{
-			InitData();
-		}
 	}
 	else{
-		InitData();
 		sqlite3_finalize(stat);
 		return FALSE;
 	}
@@ -216,7 +249,7 @@ BOOL CVTDBUtil::ParseRAWData()
 		return FALSE;
 	}
 	dataBlockInfo.tvCloneDataOffset = (dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * FM_CHANNEL_INFO_BYTE_SIZE +
-		(dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSETE]) * TV_CHANNEL_INFO_BYTE_SIZE +
+		(dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * TV_CHANNEL_INFO_BYTE_SIZE +
 		DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE;
 	dataBlockInfo.pTvCloneData = &dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset];
 	dataBlockInfo.tvCloneDataSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tvCloneDataOffset  - DATABASE_CHECKSUM_BYTE_SIZE;
@@ -274,6 +307,7 @@ BOOL CVTDBUtil::ParseATVData()
 		channelInfo.dbChannelItemDataOffset = &pTmpData[startOffset] - dataBlockInfo.pSourceData;
 		channelInfo.dbChannelItemDataSize = ATV_CHANNEL_DATA_BYTE_SIZE + atvEndStrLen + atvStartStrLen;
 		channelInfo.channelPos = pTmpData[startOffset + atvStartStrLen + ATV_CHANNEL_POS_HIGH_BYTE_OFFSET] * 256 + pTmpData[startOffset + atvStartStrLen + ATV_CHANNEL_POS_LOW_BYTE_OFFSET];
+		channelInfo.channelOldPos = channelInfo.channelPos;
 		channelInfo.channelType = TV_ATV_TYPE;
 		channelInfo.isLock = ((pTmpData[startOffset + atvStartStrLen + ATV_CHANNEL_LOCK_BYTE_OFFSET] & ATV_CHANNEL_IS_LOCK) != 0);
 		channelInfo.isSkip = ((pTmpData[startOffset + atvStartStrLen + ATV_CHANNEL_SKIP_BYTE_OFFSET] & ATV_CHANNEL_IS_SKIP) != 0);
@@ -323,6 +357,7 @@ BOOL CVTDBUtil::ParseDTVData()
 		channelInfo.dbChannelItemDataOffset = &pTmpData[startOffset] - dataBlockInfo.pSourceData;
 		channelInfo.dbChannelItemDataSize = DTV_CHANNEL_DATA_BYTE_SIZE + dtvStartStrLen + dtvEndStrLen;
 		channelInfo.channelPos = pTmpData[startOffset + dtvStartStrLen + DTV_CHANNEL_POS_HIGH_BYTE_OFFSET] * 256 + pTmpData[startOffset + dtvStartStrLen + DTV_CHANNEL_POS_LOW_BYTE_OFFSET];
+		channelInfo.channelOldPos = channelInfo.channelPos;
 		channelInfo.channelType = pTmpData[startOffset + dtvStartStrLen + DTV_CHANNEL_SERVICE_TYPE_BYTE_OFFSET];
 		channelInfo.isLock = ((pTmpData[startOffset + dtvStartStrLen + DTV_CHANNEL_LOCK_BYTE_OFFSET] & DTV_CHANNEL_IS_LOCK) != 0);
 		channelInfo.isSkip = ((pTmpData[startOffset + dtvStartStrLen + DTV_CHANNEL_SKIP_BYTE_OFFSET] & DTV_CHANNEL_IS_SKIP) != 0);
@@ -394,6 +429,7 @@ BOOL CVTDBUtil::SaveDataToDb()
 		for (i = 0; i < deleteChannelVector.size(); i++)
 		{
 			deleteChannelSize += deleteChannelVector[i].dbChannelItemDataSize;
+			deleteChannelSize += TV_CHANNEL_INFO_BYTE_SIZE;//每个TV占用40个字节
 		}
 		if (dataBlockInfo.pDBSaveData != NULL)
 		{
@@ -401,9 +437,41 @@ BOOL CVTDBUtil::SaveDataToDb()
 			dataBlockInfo.pDBSaveData = NULL;
 		}
 		dataBlockInfo.pDBSaveData = (unsigned char *)malloc(dataBlockInfo.sourceDataLen - deleteChannelSize);
-		//copy before clone data
-		memcpy(dataBlockInfo.pDBSaveData,dataBlockInfo.pSourceData,dataBlockInfo.tvCloneDataOffset);
-		nowSaveDataOffset += dataBlockInfo.tvCloneDataOffset;
+		/////////copy before clone data
+		//copy database head
+		//copy total count of fm channel
+		//copy total count of tv channel
+		//copy fm data
+		unsigned int totalFmCount, totalTvCount;
+		totalFmCount = dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET];
+		memcpy(dataBlockInfo.pDBSaveData, dataBlockInfo.pSourceData, DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*4);
+		//set tv count
+		totalTvCount = allChannelVector.size();
+		dataBlockInfo.pDBSaveData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] = totalTvCount / 256;
+		dataBlockInfo.pDBSaveData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSET] = totalTvCount % 256;
+		nowSaveDataOffset += DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount * FM_CHANNEL_INFO_BYTE_SIZE;
+		//copy tv data
+		memset(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], 0, totalTvCount*TV_CHANNEL_INFO_BYTE_SIZE);
+		sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
+		for (i = 0; i < totalTvCount;i++)
+		{
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_SERVICE_TYPE_BYTE_OFFSET] = allChannelVector[i].channelType;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_HIGH_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1)/256;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_LOW_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1) % 256;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_HIGH_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO / 256;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_LOW_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO % 256;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_SECURE_BYTE_OFFSET] = allChannelVector[i].isLock ? TV_CHANNEL_INFO_IS_SECURE_DATA : TV_CHANNEL_INFO_NOT_SECURE_DATA;
+			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_PROME_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_IS_PROME;
+			if (allChannelVector[i].channelType == TV_ATV_TYPE)
+			{
+				memcpy(&dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], allChannelVector[i].name, ATV_CHANNEL_NAME_BYTE_SIZE);
+			}
+			else
+			{
+				memcpy(&dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], allChannelVector[i].name, TV_CHANNEL_INFO_CHNAME_BYTE_SIZE);
+			}
+		}
+		nowSaveDataOffset += totalTvCount*TV_CHANNEL_INFO_BYTE_SIZE;
 		//copy before atv data
 		memcpy(&(dataBlockInfo.pDBSaveData[nowSaveDataOffset]), &(dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset]), dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset);
 		nowSaveDataOffset += dataBlockInfo.atvChannelDataOffset - dataBlockInfo.tvCloneDataOffset;
@@ -575,6 +643,82 @@ BOOL CVTDBUtil::SaveDataToDb()
 			result = FALSE;
 		}
 		sqlite3_finalize(stat);
+		if (dataBlockInfo.tvSecureChannelMajor != 0)
+		{
+			unsigned int tmpSecureChannelMajor = 0;
+			unsigned int tmpSecureChannelMinor = 0;
+			BYTE tmpSecureChannelEnable = 0;
+			for (i = 0; i < allChannelVector.size(); i++)
+			{
+				if (allChannelVector[i].channelOldPos == dataBlockInfo.tvSecureChannelMajor - 1)
+				{
+					tmpSecureChannelMajor = allChannelVector[i].channelPos + 1;
+					tmpSecureChannelEnable = allChannelVector[i].isLock ? 0x01: 0x00;
+				}
+			}
+			if (sqlite3_prepare(pChannelDataDB, "update SETTINGS SET DATA = ? where FIELDNAME='SecureChannelMajor'", -1, &stat, 0) == SQLITE_OK){
+				pTmpData = (unsigned char *)malloc(2);
+				pTmpData[0] = tmpSecureChannelMajor / 256;
+				pTmpData[1] = tmpSecureChannelMajor % 256;
+				if (sqlite3_bind_blob(stat, 1, pTmpData, 2, NULL) == SQLITE_OK)
+				{
+					if (sqlite3_step(stat) != SQLITE_DONE)
+					{
+						result = FALSE;
+					}
+				}
+				else
+				{
+					result = FALSE;
+				}
+				free(pTmpData);
+			}
+			else{
+				result = FALSE;
+			}
+			sqlite3_finalize(stat);
+			if (sqlite3_prepare(pChannelDataDB, "update SETTINGS SET DATA = ? where FIELDNAME='SecureChannelEnabled'", -1, &stat, 0) == SQLITE_OK){
+				pTmpData = (unsigned char *)malloc(1);
+				pTmpData[0] = tmpSecureChannelEnable;
+				if (sqlite3_bind_blob(stat, 1, pTmpData, 1, NULL) == SQLITE_OK)
+				{
+					if (sqlite3_step(stat) != SQLITE_DONE)
+					{
+						result = FALSE;
+					}
+				}
+				else
+				{
+					result = FALSE;
+				}
+				free(pTmpData);
+			}
+			else{
+				result = FALSE;
+			}
+			sqlite3_finalize(stat);
+			if (sqlite3_prepare(pChannelDataDB, "update SETTINGS SET DATA = ? where FIELDNAME='SecureChannelMinor'", -1, &stat, 0) == SQLITE_OK){
+				pTmpData = (unsigned char *)malloc(2);
+				pTmpData[0] = tmpSecureChannelMinor / 256;
+				pTmpData[1] = tmpSecureChannelMinor % 256;
+				if (sqlite3_bind_blob(stat, 1, pTmpData, 2, NULL) == SQLITE_OK)
+				{
+					if (sqlite3_step(stat) != SQLITE_DONE)
+					{
+						result = FALSE;
+					}
+				}
+				else
+				{
+					result = FALSE;
+				}
+				free(pTmpData);
+			}
+			else{
+				result = FALSE;
+			}
+			sqlite3_finalize(stat);
+		}
 		//free
 		if (dataBlockInfo.pDBSaveData != NULL)
 		{
