@@ -200,7 +200,6 @@ BOOL CVTDBUtil::ParseRAWData()
 			const void * pFileContent = sqlite3_column_blob(stat, 0);
 			const int size = sqlite3_column_bytes(stat, 0);
 			dataBlockInfo.tvSecureChannelEnable = ((unsigned char*)pFileContent)[0];
-			printf("%d\n", dataBlockInfo.tvSecureChannelEnable);
 		}
 	}
 	sqlite3_finalize(stat);
@@ -210,7 +209,6 @@ BOOL CVTDBUtil::ParseRAWData()
 			const void * pFileContent = sqlite3_column_blob(stat, 0);
 			const int size = sqlite3_column_bytes(stat, 0);
 			dataBlockInfo.tvSecureChannelMajor = ((unsigned char*)pFileContent)[0] * 256 + ((unsigned char*)pFileContent)[1];
-			printf("%d\n", dataBlockInfo.tvSecureChannelMajor);
 		}
 	}
 	sqlite3_finalize(stat);
@@ -220,7 +218,6 @@ BOOL CVTDBUtil::ParseRAWData()
 			const void * pFileContent = sqlite3_column_blob(stat, 0);
 			const int size = sqlite3_column_bytes(stat, 0);
 			dataBlockInfo.tvSecureChannelMinor = ((unsigned char*)pFileContent)[0] * 256 + ((unsigned char*)pFileContent)[1];
-			printf("%d\n", dataBlockInfo.tvSecureChannelMinor);
 		}
 	}
 	sqlite3_finalize(stat);
@@ -248,8 +245,8 @@ BOOL CVTDBUtil::ParseRAWData()
 	{
 		return FALSE;
 	}
-	dataBlockInfo.tvCloneDataOffset = (dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * FM_CHANNEL_INFO_BYTE_SIZE +
-		(dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * TV_CHANNEL_INFO_BYTE_SIZE +
+	dataBlockInfo.tvCloneDataOffset = (dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGH_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * FM_CHANNEL_INFO_BYTE_SIZE +
+		(dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_HIGH_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSET]) * TV_CHANNEL_INFO_BYTE_SIZE +
 		DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE;
 	dataBlockInfo.pTvCloneData = &dataBlockInfo.pSourceData[dataBlockInfo.tvCloneDataOffset];
 	dataBlockInfo.tvCloneDataSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tvCloneDataOffset  - DATABASE_CHECKSUM_BYTE_SIZE;
@@ -443,11 +440,11 @@ BOOL CVTDBUtil::SaveDataToDb()
 		//copy total count of tv channel
 		//copy fm data
 		unsigned int totalFmCount, totalTvCount;
-		totalFmCount = dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET];
-		memcpy(dataBlockInfo.pDBSaveData, dataBlockInfo.pSourceData, DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*4);
+		totalFmCount = dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_HIGH_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[FM_CHANNEL_COUNT_LOW_BYTE_OFFSET];
+		memcpy(dataBlockInfo.pDBSaveData, dataBlockInfo.pSourceData, DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*FM_CHANNEL_INFO_BYTE_SIZE);
 		//set tv count
 		totalTvCount = allChannelVector.size();
-		dataBlockInfo.pDBSaveData[TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET] = totalTvCount / 256;
+		dataBlockInfo.pDBSaveData[TV_CHANNEL_COUNT_HIGH_BYTE_OFFSET] = totalTvCount / 256;
 		dataBlockInfo.pDBSaveData[TV_CHANNEL_COUNT_LOW_BYTE_OFFSET] = totalTvCount % 256;
 		nowSaveDataOffset += DATABASE_HEAD_BYTE_SIZE + FM_CHANNEL_COUNT_BYTE_SIZE + TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount * FM_CHANNEL_INFO_BYTE_SIZE;
 		//copy tv data
@@ -455,20 +452,27 @@ BOOL CVTDBUtil::SaveDataToDb()
 		sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
 		for (i = 0; i < totalTvCount;i++)
 		{
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_SERVICE_TYPE_BYTE_OFFSET] = allChannelVector[i].channelType;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_HIGH_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1)/256;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_LOW_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1) % 256;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_HIGH_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO / 256;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_LOW_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO % 256;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_SECURE_BYTE_OFFSET] = allChannelVector[i].isLock ? TV_CHANNEL_INFO_IS_SECURE_DATA : TV_CHANNEL_INFO_NOT_SECURE_DATA;
-			dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_PROME_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_IS_PROME;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_SERVICE_TYPE_BYTE_OFFSET] = allChannelVector[i].channelType;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_HIGH_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1) / 256;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MAJOR_CHANNO_LOW_BYTE_OFFSET] = (allChannelVector[i].channelPos + 1) % 256;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_HIGH_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO / 256;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_MINOR_CHANNO_LOW_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_MINOR_CHANNO % 256;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_SECURE_BYTE_OFFSET] = allChannelVector[i].isLock ? TV_CHANNEL_INFO_IS_SECURE_DATA : TV_CHANNEL_INFO_NOT_SECURE_DATA;
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_IS_PROME_BYTE_OFFSET] = TV_CHANNEL_INFO_DEFAULT_IS_PROME;
 			if (allChannelVector[i].channelType == TV_ATV_TYPE)
 			{
-				memcpy(&dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], allChannelVector[i].name, ATV_CHANNEL_NAME_BYTE_SIZE);
+				memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], allChannelVector[i].name, ATV_CHANNEL_NAME_BYTE_SIZE);
 			}
 			else
 			{
-				memcpy(&dataBlockInfo.pDBSaveData[i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], allChannelVector[i].name, TV_CHANNEL_INFO_CHNAME_BYTE_SIZE);
+				WORD unicodeName[DTV_CHANNEL_NAME_BYTE_SIZE];
+				MApp_TranslateCharTableToUnicode((BYTE *)allChannelVector[i].name, unicodeName, DTV_CHANNEL_NAME_BYTE_SIZE);
+				CString unicodeStr;
+				unicodeStr.Format(L"%s", unicodeName);
+				char * utf8name = (char *)malloc(DTV_CHANNEL_NAME_BYTE_SIZE);
+				memset(utf8name, 0, DTV_CHANNEL_NAME_BYTE_SIZE);
+				utf8name = UnicodeToUtf8(unicodeStr);
+				memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], utf8name, DTV_CHANNEL_NAME_BYTE_SIZE);
 			}
 		}
 		nowSaveDataOffset += totalTvCount*TV_CHANNEL_INFO_BYTE_SIZE;
@@ -853,6 +857,7 @@ BOOL CVTDBUtil::MemFindDataFirstOffset(unsigned char * sourceData, unsigned int 
 {
 	unsigned int i, j, count;
 	count = sourceDataLen - findDataLen + 1;
+	//printf("sourceDataLen = %d", sourceDataLen);
 	for (i = 0; i < count; i++)
 	{
 		for (j = 0; j < findDataLen; j++)
@@ -861,6 +866,7 @@ BOOL CVTDBUtil::MemFindDataFirstOffset(unsigned char * sourceData, unsigned int 
 			{
 				break;
 			}
+			//printf("i=%d : %c\n", i,sourceData[i+j]);
 			if (j == findDataLen - 1)
 			{
 				offset = i;

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "sqlite3.h"
 #include "stdafx.h"
+#include "CharTranslate.h"
 
 using namespace std;
 
@@ -64,12 +65,12 @@ typedef enum {
 #define ATV_CHECKSUM_BYTE_SIZE              2
 #define DTV_CHECKSUM_BYTE_SIZE              2
 
-#define FM_CHANNEL_COUNT_HIGHT_BYTE_OFFSET  12
+#define FM_CHANNEL_COUNT_HIGH_BYTE_OFFSET  12
 #define FM_CHANNEL_COUNT_LOW_BYTE_OFFSET    13
 #define FM_CHANNEL_INFO_BYTE_SIZE                4
 #define FM_CHANNEL_COUNT_BYTE_SIZE          2
 
-#define TV_CHANNEL_COUNT_HIGHT_BYTE_OFFSET  14
+#define TV_CHANNEL_COUNT_HIGH_BYTE_OFFSET  14
 #define TV_CHANNEL_COUNT_LOW_BYTE_OFFSET   15
 #define TV_CHANNEL_INFO_BYTE_SIZE                40
 #define TV_CHANNEL_COUNT_BYTE_SIZE          2

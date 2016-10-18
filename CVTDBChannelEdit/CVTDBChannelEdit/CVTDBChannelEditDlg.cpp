@@ -499,10 +499,8 @@ BOOL CCVTDBChannelEditDlg::CStringIsAscii(CString str)
 	USES_CONVERSION;
 	char * pStr = T2A(str.GetBuffer());
 	int len = strlen(pStr);
-	printf("len  %d\n", len);
 	for (int i = 0; i < len; i++)
 	{
-		printf("%c  %d\n", pStr[i], pStr[i]);
 		if (pStr[i] < 0 || pStr[i]>127)
 		{
 			return FALSE;

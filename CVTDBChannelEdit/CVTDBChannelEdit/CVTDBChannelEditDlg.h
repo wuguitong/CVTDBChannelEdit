@@ -7,7 +7,6 @@
 #include "QuickList.h"
 #include "sqlite3.h"
 #include "CVTDBUtil.h"
-#include "CharTranslate.h"
 #include "afxwin.h"
 
 // CCVTDBChannelEditDlg ¶Ô»°¿ò
