@@ -469,10 +469,8 @@ BOOL CVTDBUtil::SaveDataToDb()
 				MApp_TranslateCharTableToUnicode((BYTE *)allChannelVector[i].name, unicodeName, DTV_CHANNEL_NAME_BYTE_SIZE);
 				CString unicodeStr;
 				unicodeStr.Format(L"%s", unicodeName);
-				char * utf8name = (char *)malloc(DTV_CHANNEL_NAME_BYTE_SIZE);
-				memset(utf8name, 0, DTV_CHANNEL_NAME_BYTE_SIZE);
-				utf8name = UnicodeToUtf8(unicodeStr);
-				memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], utf8name, DTV_CHANNEL_NAME_BYTE_SIZE);
+				char * utf8name = UnicodeToUtf8(unicodeStr);
+				memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset + i*TV_CHANNEL_INFO_BYTE_SIZE + TV_CHANNEL_INFO_CHNAME_BYTE_OFFSET], utf8name, strlen(utf8name) + 1);
 			}
 		}
 		nowSaveDataOffset += totalTvCount*TV_CHANNEL_INFO_BYTE_SIZE;
