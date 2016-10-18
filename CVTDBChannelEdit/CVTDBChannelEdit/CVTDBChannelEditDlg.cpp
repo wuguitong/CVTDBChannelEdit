@@ -73,6 +73,8 @@ BEGIN_MESSAGE_MAP(CCVTDBChannelEditDlg, CDialogEx)
 	ON_MESSAGE(WM_QUICKLIST_GETLISTITEMDATA, OnGetListItem)
 	ON_MESSAGE(WM_QUICKLIST_CLICK, OnListClick)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE, &CCVTDBChannelEditDlg::OnBnClickedButtonDelete)
+	//
+	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
@@ -507,4 +509,32 @@ BOOL CCVTDBChannelEditDlg::CStringIsAscii(CString str)
 		}
 	}
 	return TRUE;
+}
+
+void CCVTDBChannelEditDlg::OnClose()
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	USES_CONVERSION;
+	if (pCVTDBUtil != NULL)
+	{
+		UINT nRet = MessageBox(_T("Whether to save the database?"), _T("Save DB?"), MB_YESNO);
+		if (nRet == IDYES)
+		{
+			BOOL result = FALSE;
+			if (pCVTDBUtil->OpenDb())
+			{
+				result = pCVTDBUtil->SaveDataToDb();
+				pCVTDBUtil->CloseDb();
+				if (!result)
+				{
+					AfxMessageBox(A2T("Save DB Fail!"));
+				}
+			}
+			else
+			{
+				AfxMessageBox(A2T("Can not Open DB!"));
+			}
+		}
+	}
+	CDialogEx::OnClose();
 }
