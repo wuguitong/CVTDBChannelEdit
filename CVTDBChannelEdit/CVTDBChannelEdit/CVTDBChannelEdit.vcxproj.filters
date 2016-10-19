@@ -92,5 +92,11 @@
     <Image Include="res\CVTDBChannelEdit.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\ScreenCntSys.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\CVTDBChannelEd.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
