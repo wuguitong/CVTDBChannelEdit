@@ -51,4 +51,5 @@ public:
 	afx_msg void OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult);
 	BOOL CStringIsAscii(CString str);
 	afx_msg void OnClose();
+	afx_msg void OnHelpAbout();
 };

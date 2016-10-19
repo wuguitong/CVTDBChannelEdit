@@ -51,6 +51,9 @@
     <ClInclude Include="CharTranslate.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CVTDBEditAboutDialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CVTDBChannelEdit.cpp">
@@ -75,6 +78,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CharTranslate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CVTDBEditAboutDialog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

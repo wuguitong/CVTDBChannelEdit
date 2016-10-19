@@ -107,6 +107,7 @@
   <ItemGroup>
     <ClInclude Include="CVTDBChannelEdit.h" />
     <ClInclude Include="CVTDBChannelEditDlg.h" />
+    <ClInclude Include="CVTDBEditAboutDialog.h" />
     <ClInclude Include="CVTDBUtil.h" />
     <ClInclude Include="QuickEdit.h" />
     <ClInclude Include="QuickList.h" />
@@ -120,6 +121,7 @@
   <ItemGroup>
     <ClCompile Include="CVTDBChannelEdit.cpp" />
     <ClCompile Include="CVTDBChannelEditDlg.cpp" />
+    <ClCompile Include="CVTDBEditAboutDialog.cpp" />
     <ClCompile Include="CVTDBUtil.cpp" />
     <ClCompile Include="QuickEdit.cpp" />
     <ClCompile Include="QuickList.cpp" />

@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "CVTDBChannelEdit.h"
 #include "CVTDBChannelEditDlg.h"
+#include "CVTDBEditAboutDialog.h"
 #include "afxdialogex.h"
 
 #ifdef _DEBUG
@@ -75,6 +76,7 @@ BEGIN_MESSAGE_MAP(CCVTDBChannelEditDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE, &CCVTDBChannelEditDlg::OnBnClickedButtonDelete)
 	//
 	ON_WM_CLOSE()
+	ON_COMMAND(ID_HELP_ABOUT, &CCVTDBChannelEditDlg::OnHelpAbout)
 END_MESSAGE_MAP()
 
 
@@ -537,4 +539,12 @@ void CCVTDBChannelEditDlg::OnClose()
 		}
 	}
 	CDialogEx::OnClose();
+}
+
+
+void CCVTDBChannelEditDlg::OnHelpAbout()
+{
+	// TODO:  在此添加命令处理程序代码
+	CVTDBEditAboutDialog aboutDialog = new CVTDBEditAboutDialog();
+	aboutDialog.DoModal();
 }
