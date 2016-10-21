@@ -336,9 +336,10 @@ LRESULT CCVTDBChannelEditDlg::OnGetListItem(WPARAM wParam, LPARAM lParam)
 		
 		if ((*pChannelVector)[item].channelType != TV_ATV_TYPE)
 		{
-			data->m_maxCharacter = 24;
-			WORD name[DTV_CHANNEL_NAME_BYTE_SIZE];
-			MApp_TranslateCharTableToUnicode((BYTE *)(*pChannelVector)[item].name, name, DTV_CHANNEL_NAME_BYTE_SIZE);
+			data->m_maxCharacter = 23;
+			const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
+			WORD name[100];
+			MApp_TranslateCharTableToUnicode((BYTE *)(*pChannelVector)[item].name, name, dtvByteSize);
 			data->m_text.Format(L"%s", name);
 		}
 		else{
@@ -468,18 +469,20 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 	case CHANNEL_NAME:
 		str = pDispInfo->item.pszText;
 		if ((*pChannelVector)[iItem].channelType != TV_ATV_TYPE){
-			if (strlen(T2A(str.GetBuffer())) > DTV_CHANNEL_NAME_BYTE_SIZE)
+			const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
+			if (strlen(T2A(str.GetBuffer())) > dtvByteSize)
 			{
 				AfxMessageBox(A2T("Name is too long,edit fail!"));
 			}
 			else
 			{
-				MApp_TranslateUnicodeToCharTable((BYTE *)(*pChannelVector)[iItem].name, (WORD *)str.GetBuffer(), DTV_CHANNEL_NAME_BYTE_SIZE);
+				MApp_TranslateUnicodeToCharTable((BYTE *)(*pChannelVector)[iItem].name, (WORD *)str.GetBuffer(), dtvByteSize);
 			}
 		}
 		else
 		{
-			if (strlen(T2A(str.GetBuffer())) > ATV_CHANNEL_NAME_BYTE_SIZE)
+			const int atvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_ATV_TYPE);
+			if (strlen(T2A(str.GetBuffer())) > atvByteSize)
 			{
 				AfxMessageBox(A2T("Name is too long,edit fail!"));
 			}
