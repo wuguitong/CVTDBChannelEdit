@@ -42,6 +42,7 @@ public:
 	ChannelVector* pChannelVector;
 	CVTDBUtil* pCVTDBUtil;
 	CStatic CStaticPathStr;
+	BOARD_TYPE boardType;
 	void UpdateList(int itemCount);
 	afx_msg void OnBnClickedOpendb();
 	afx_msg void OnBnClickedSavedb();
@@ -49,6 +50,7 @@ public:
 	LRESULT OnListClick(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedButtonDelete();
 	afx_msg void OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBeginlabeleditList(NMHDR* pNMHDR, LRESULT* pResult);
 	BOOL CStringIsAscii(CString str);
 	afx_msg void OnClose();
 	afx_msg void OnHelpAbout();

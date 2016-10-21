@@ -71,6 +71,7 @@ BEGIN_MESSAGE_MAP(CCVTDBChannelEditDlg, CDialogEx)
 
 	//
 	ON_NOTIFY(LVN_ENDLABELEDIT, IDC_LIST_DB_DATA, OnEndlabeleditList)
+	ON_NOTIFY(LVN_BEGINLABELEDIT, IDC_LIST_DB_DATA, OnBeginlabeleditList)
 	ON_MESSAGE(WM_QUICKLIST_GETLISTITEMDATA, OnGetListItem)
 	ON_MESSAGE(WM_QUICKLIST_CLICK, OnListClick)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE, &CCVTDBChannelEditDlg::OnBnClickedButtonDelete)
@@ -114,9 +115,9 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化代码
 	USES_CONVERSION;
 	//debug
-	/*AllocConsole();
+	AllocConsole();
 	FILE *fp;
-	freopen_s(&fp, "CONOUT$", "w+t", stdout);*/
+	freopen_s(&fp, "CONOUT$", "w+t", stdout);
 	//debug
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_SUBITEMIMAGES, LVS_EX_SUBITEMIMAGES);
@@ -153,6 +154,7 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	UpdateList(0);
 	CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD));
 	CStaticPathStr.SetFont(pFont);
+	boardType = BOARD_TYPE_NONE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -225,6 +227,7 @@ void CCVTDBChannelEditDlg::OnBnClickedOpendb()
 		{
 			result = pCVTDBUtil->ParseRAWData();
 			pCVTDBUtil->CloseDb();
+			boardType = pCVTDBUtil->GetBoardType();
 			pChannelVector = pCVTDBUtil->GetChannelVectorByPos();
 			UpdateList(pChannelVector->size());
 			CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD) + filePath);
@@ -333,27 +336,48 @@ LRESULT CCVTDBChannelEditDlg::OnGetListItem(WPARAM wParam, LPARAM lParam)
 		break;
 	case CHANNEL_NAME:
 		data->m_allowEdit = true;
-		
-		if ((*pChannelVector)[item].channelType != TV_ATV_TYPE)
+		switch (boardType)
 		{
-			data->m_maxCharacter = 23;
-			const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
-			WORD name[100];
-			MApp_TranslateCharTableToUnicode((BYTE *)(*pChannelVector)[item].name, name, dtvByteSize);
-			data->m_text.Format(L"%s", name);
-		}
-		else{
+		case BOARD_T_MSD30X_B55TA_TYPE:
+			if ((*pChannelVector)[item].channelType != TV_ATV_TYPE)
+			{
+				data->m_maxCharacter = 23;
+				const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
+				WORD name[100];
+				MApp_TranslateCharTableToUnicode((BYTE *)(*pChannelVector)[item].name, name, dtvByteSize);
+				data->m_text.Format(L"%s", name);
+			}
+			else{
+				data->m_maxCharacter = 7;
+				data->m_text.Format(L"%s", A2T((*pChannelVector)[item].name));
+			}
+			break;
+		case BOARD_MSD3393_CVT_55A_TYPE:
 			data->m_maxCharacter = 7;
-			data->m_text.Format(L"%s", A2T((*pChannelVector)[item].name));
+			data->m_text.Format(L"%d.%d  %s", (*pChannelVector)[item].tvMajorNum, (*pChannelVector)[item].tvMinorNum, A2T((*pChannelVector)[item].name));
+			break;
+		default:
+			break;
 		}
 		break;
 	case CHANNEL_SKIP:
-		data->m_button.m_draw = true;
-		data->m_button.m_noSelection = 1;
-		data->m_button.m_style = DFCS_BUTTONCHECK;
-		data->m_text = "Skip";
-		if ((*pChannelVector)[item].isSkip)
-			data->m_button.m_style |= DFCS_CHECKED;
+		switch (boardType)
+		{
+		case BOARD_T_MSD30X_B55TA_TYPE:
+			data->m_button.m_draw = true;
+			data->m_button.m_noSelection = 1;
+			data->m_button.m_style = DFCS_BUTTONCHECK;
+			data->m_text = "Skip";
+			if ((*pChannelVector)[item].isSkip)
+				data->m_button.m_style |= DFCS_CHECKED;
+			break;
+		case BOARD_MSD3393_CVT_55A_TYPE:
+			data->m_colors.m_textColor = RGB(150, 150, 150);
+			data->m_text = "NONE";
+			break;
+		default:
+			break;
+		}
 		break;
 	case CHANNEL_LOCK:
 		data->m_button.m_draw = true;
@@ -468,38 +492,84 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 		break;
 	case CHANNEL_NAME:
 		str = pDispInfo->item.pszText;
-		if ((*pChannelVector)[iItem].channelType != TV_ATV_TYPE){
-			const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
-			if (strlen(T2A(str.GetBuffer())) > dtvByteSize)
-			{
-				AfxMessageBox(A2T("Name is too long,edit fail!"));
-			}
-			else
-			{
-				MApp_TranslateUnicodeToCharTable((BYTE *)(*pChannelVector)[iItem].name, (WORD *)str.GetBuffer(), dtvByteSize);
-			}
-		}
-		else
+		switch (boardType)
 		{
-			const int atvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_ATV_TYPE);
-			if (strlen(T2A(str.GetBuffer())) > atvByteSize)
-			{
-				AfxMessageBox(A2T("Name is too long,edit fail!"));
-			}
-			else if (!CStringIsAscii(str))
-			{
-				AfxMessageBox(A2T("ATV Name should be Ascii"));
+		case BOARD_T_MSD30X_B55TA_TYPE:
+			if ((*pChannelVector)[iItem].channelType != TV_ATV_TYPE){
+				const int dtvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
+				if (strlen(T2A(str.GetBuffer())) > dtvByteSize)
+				{
+					AfxMessageBox(A2T("Name is too long,edit fail!"));
+				}
+				else
+				{
+					MApp_TranslateUnicodeToCharTable((BYTE *)(*pChannelVector)[iItem].name, (WORD *)str.GetBuffer(), dtvByteSize);
+				}
 			}
 			else
 			{
-				strcpy((*pChannelVector)[iItem].name, T2A(str));
+				const int atvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_ATV_TYPE);
+				if (strlen(T2A(str.GetBuffer())) > atvByteSize)
+				{
+					AfxMessageBox(A2T("Name is too long,edit fail!"));
+				}
+				else if (!CStringIsAscii(str))
+				{
+					AfxMessageBox(A2T("ATV Name should be Ascii"));
+				}
+				else
+				{
+					strcpy((*pChannelVector)[iItem].name, T2A(str));
+				}
 			}
+			break;
+		case BOARD_MSD3393_CVT_55A_TYPE:
+			{
+				const int tvByteSize = pCVTDBUtil->GetTvNameByteSize(TV_DTV_TYPE);
+				if (strlen(T2A(str.GetBuffer())) > tvByteSize)
+				{
+					AfxMessageBox(A2T("Name is too long,edit fail!"));
+				}
+				else if (!CStringIsAscii(str))
+				{
+					AfxMessageBox(A2T("ATV Name should be Ascii"));
+				}
+				else
+				{
+					strcpy((*pChannelVector)[iItem].name, T2A(str));
+				}
+			}
+			break;
+		default:
+			break;
 		}
+
 		ClistCtrlDBData.RedrawSubitems(iItem, iItem, iSubItem);
 		break;
 	default:
 		break;
 	}
+}
+void CCVTDBChannelEditDlg::OnBeginlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LV_DISPINFO* pDispInfo = (LV_DISPINFO*)pNMHDR;
+
+	// Here can you change the text that should be edited.
+	// In this case we don't want to edit the number in the first column
+	USES_CONVERSION;
+	if ((pDispInfo->item.iSubItem == CHANNEL_NAME) && (boardType == BOARD_MSD3393_CVT_55A_TYPE))
+	{
+
+		lstrcpyn(pDispInfo->item.pszText,
+			A2T((*pChannelVector)[pDispInfo->item.iItem].name),
+			pDispInfo->item.cchTextMax);
+
+
+	}
+
+
+	//Set to TRUE if you don't want to allo the user to change the label
+	*pResult = 0;
 }
 BOOL CCVTDBChannelEditDlg::CStringIsAscii(CString str)
 {
