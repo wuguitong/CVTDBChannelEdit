@@ -965,16 +965,12 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		channelInfo.channelOldPos = i - 1;
 		channelInfo.channelPos = i - 1;
 		channelInfo.tvPhysicalChIdx = dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE + 0];
-		printf("channelInfo.tvPhysicalChIdx=%d\n", channelInfo.tvPhysicalChIdx);
-		channelInfo.tvVirChInfoStartIdx = dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 2]
-			+ (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 3] & 0x03) * 256;
-		printf("channelInfo.tvVirChInfoStartIdx=%d\n", channelInfo.tvVirChInfoStartIdx);
-		channelInfo.tvVirPos = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE + 1] & 0x7F) + channelInfo.tvVirChInfoStartIdx;
-		printf("channelInfo.tvVirPos=%d\n", channelInfo.tvVirPos);
-		printf("channelInfo.u8VirChInfoIdx=%d\n", (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE + 1] & 0x7F));
-		channelInfo.tvVirChIdx = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE] + 
-			((dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + 1]) & 0x03 * 256));
-		printf("channelInfo.tvVirChIdx=%d\n", channelInfo.tvVirChIdx);
+		channelInfo.tvVirChInfoStartIdx = dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + channelInfo.tvPhysicalChIdx*MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 2]
+			+ (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + channelInfo.tvPhysicalChIdx*MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 3] & 0x03) * 256;
+		channelInfo.tvVirChInfoIdx = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE + 1] & 0x7F);
+		channelInfo.tvVirPos = channelInfo.tvVirChInfoIdx + channelInfo.tvVirChInfoStartIdx;
+		channelInfo.tvVirChIdx = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + channelInfo.tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE] +
+			((dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + channelInfo.tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + 1]) & 0x03 * 256));
 		MSD3393VirtualChannelInfo virtualInfo;
 		MSD3393GetChannelIndoByVirChIdx(channelInfo.tvVirChIdx, virtualInfo);
 		channelInfo.tvMajorNum = virtualInfo.majorNum;

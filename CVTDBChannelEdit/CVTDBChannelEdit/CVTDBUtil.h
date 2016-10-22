@@ -240,13 +240,14 @@ typedef struct stChannelInfo{
 	//3393
 	unsigned int tvPhysicalChIdx;
 	unsigned int tvVirChInfoStartIdx;
+	unsigned int tvVirChInfoIdx;
 	unsigned int tvVirPos;
 	unsigned int tvVirChIdx;
 	unsigned int tvMajorNum;
 	unsigned int tvMinorNum;
 	stChannelInfo():isSkip(false), isLock(false),isSelect(false), indexForAtv(DEF_INVALID_VALUE), indexForDtv(DEF_INVALID_VALUE),
 		atvChannelNo(DEF_INVALID_VALUE), channelPos(DEF_INVALID_VALUE), channelOldPos(DEF_INVALID_VALUE), channelType(DEF_INVALID_VALUE), dbChannelItemDataOffset(DEF_INVALID_VALUE), 
-		dbChannelItemDataSize(0), tvPhysicalChIdx(DEF_INVALID_VALUE), tvVirChInfoStartIdx(DEF_INVALID_VALUE), tvVirPos(DEF_INVALID_VALUE), tvVirChIdx(DEF_INVALID_VALUE),
+		dbChannelItemDataSize(0), tvPhysicalChIdx(DEF_INVALID_VALUE), tvVirChInfoStartIdx(DEF_INVALID_VALUE), tvVirChInfoIdx(DEF_INVALID_VALUE), tvVirPos(DEF_INVALID_VALUE), tvVirChIdx(DEF_INVALID_VALUE),
 		tvMajorNum(DEF_INVALID_VALUE),tvMinorNum(DEF_INVALID_VALUE){};
 }ChannelInfo;
 
