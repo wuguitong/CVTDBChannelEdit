@@ -12,6 +12,10 @@ bool SortByPos(const ChannelInfo& first, const ChannelInfo& second)
 {
 	return first.channelPos < second.channelPos;
 }
+bool SortByOldPos(const ChannelInfo& first, const ChannelInfo& second)
+{
+	return first.channelOldPos < second.channelOldPos;
+}
 bool SortByAtvIndex(const ChannelInfo& first, const ChannelInfo& second)
 {
 	return first.indexForAtv < second.indexForAtv;
@@ -971,6 +975,13 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		channelInfo.tvVirPos = channelInfo.tvVirChInfoIdx + channelInfo.tvVirChInfoStartIdx;
 		channelInfo.tvVirChIdx = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + channelInfo.tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE] +
 			((dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + channelInfo.tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + 1]) & 0x03 * 256));
+		//old value
+		channelInfo.tvOldPhysicalChIdx = channelInfo.tvPhysicalChIdx;
+		channelInfo.tvOldVirChInfoStartIdx = channelInfo.tvVirChInfoStartIdx;
+		channelInfo.tvOldVirChInfoIdx = channelInfo.tvVirChInfoIdx;
+		channelInfo.tvOldVirPos = channelInfo.tvVirPos;
+		channelInfo.tvOldVirChIdx = channelInfo.tvVirChIdx;
+
 		MSD3393VirtualChannelInfo virtualInfo;
 		MSD3393GetChannelIndoByVirChIdx(channelInfo.tvVirChIdx, virtualInfo);
 		channelInfo.tvMajorNum = virtualInfo.majorNum;
@@ -979,6 +990,8 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		channelInfo.channelType = virtualInfo.serviceType;
 		channelInfo.isLock = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_VIRTUAL_CHANNEL_INFO_BYTE_SIZE + MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_OFFSET] & MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_BIT)?true:false;
 		allChannelVector.push_back(channelInfo);
+		printf("pos = %d  tvPhysicalChIdx=%d tvVirChInfoStartIdx=%d tvVirChInfoIdx=%d tvVirPos=%d tvVirChIdx=%d\n", 
+			channelInfo.channelPos, channelInfo.tvPhysicalChIdx, channelInfo.tvVirChInfoStartIdx, channelInfo.tvVirChInfoIdx, channelInfo.tvVirPos, channelInfo.tvVirChIdx);
 	}
 	return result;
 }

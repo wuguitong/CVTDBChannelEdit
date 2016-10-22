@@ -243,12 +243,18 @@ typedef struct stChannelInfo{
 	unsigned int tvVirChInfoIdx;
 	unsigned int tvVirPos;
 	unsigned int tvVirChIdx;
+	unsigned int tvOldPhysicalChIdx;
+	unsigned int tvOldVirChInfoStartIdx;
+	unsigned int tvOldVirChInfoIdx;
+	unsigned int tvOldVirPos;
+	unsigned int tvOldVirChIdx;
 	unsigned int tvMajorNum;
 	unsigned int tvMinorNum;
 	stChannelInfo():isSkip(false), isLock(false),isSelect(false), indexForAtv(DEF_INVALID_VALUE), indexForDtv(DEF_INVALID_VALUE),
 		atvChannelNo(DEF_INVALID_VALUE), channelPos(DEF_INVALID_VALUE), channelOldPos(DEF_INVALID_VALUE), channelType(DEF_INVALID_VALUE), dbChannelItemDataOffset(DEF_INVALID_VALUE), 
 		dbChannelItemDataSize(0), tvPhysicalChIdx(DEF_INVALID_VALUE), tvVirChInfoStartIdx(DEF_INVALID_VALUE), tvVirChInfoIdx(DEF_INVALID_VALUE), tvVirPos(DEF_INVALID_VALUE), tvVirChIdx(DEF_INVALID_VALUE),
-		tvMajorNum(DEF_INVALID_VALUE),tvMinorNum(DEF_INVALID_VALUE){};
+		tvOldPhysicalChIdx(DEF_INVALID_VALUE), tvOldVirChInfoStartIdx(DEF_INVALID_VALUE), tvOldVirChInfoIdx(DEF_INVALID_VALUE), tvOldVirPos(DEF_INVALID_VALUE), tvOldVirChIdx(DEF_INVALID_VALUE),
+		tvMajorNum(DEF_INVALID_VALUE), tvMinorNum(DEF_INVALID_VALUE){};
 }ChannelInfo;
 
 
