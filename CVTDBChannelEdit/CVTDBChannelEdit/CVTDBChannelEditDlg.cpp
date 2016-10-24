@@ -479,7 +479,7 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 	case CHANNEL_POS:
 		str = pDispInfo->item.pszText;
 		pos = _wtoi(pDispInfo->item.pszText);
-		if ((pos >= pChannelVector->size()) || (pos <= 0) || !(str.SpanIncluding(_T("0123456789")) == str))
+		if ((pos > pChannelVector->size()) || (pos <= 0) || !(str.SpanIncluding(_T("0123456789")) == str))
 		{
 			str.Format(L"Enter error please enter 1 to %d",pChannelVector->size());
 			AfxMessageBox(str);

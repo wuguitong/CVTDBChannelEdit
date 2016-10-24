@@ -16,6 +16,14 @@ bool SortByOldPos(const ChannelInfo& first, const ChannelInfo& second)
 {
 	return first.channelOldPos < second.channelOldPos;
 }
+bool SortByOldVirChIdx(const ChannelInfo& first, const ChannelInfo& second)
+{
+	return first.tvOldVirChIdx < second.tvOldVirChIdx;
+}
+bool SortByOldPhysicalChIdx(const ChannelInfo& first, const ChannelInfo& second)
+{
+	return first.tvOldPhysicalChIdx < second.tvOldPhysicalChIdx;
+}
 bool SortByAtvIndex(const ChannelInfo& first, const ChannelInfo& second)
 {
 	return first.indexForAtv < second.indexForAtv;
@@ -859,8 +867,240 @@ BOOL CVTDBUtil::MSD309SaveDataToDb()
 }
 BOOL CVTDBUtil::MSD3393SaveDataToDb()
 {
+	USES_CONVERSION;
 	BOOL result = TRUE;
+	unsigned char * pTmpData;
+	unsigned char * pTmpCheckSum;
+	unsigned int i,j,count, dataCheckSum = 0, nowSaveDataOffset = 0, deleteChannelSize = 0;
+	if (pChannelDataDB == NULL)
+	{
+		return FALSE;
+	}
+	else
+	{
+		if (pDbFilePath == NULL){
+			return FALSE;
+		}
+		for (i = 0; i < deleteChannelVector.size(); i++)
+		{
+			deleteChannelSize += deleteChannelVector[i].dbChannelItemDataSize;
+			//deleteChannelSize += MSD3393_TV_CHANNEL_INFO_BYTE_SIZE;//每个TV占用40个字节
+		}
+		if (dataBlockInfo.pDBSaveData != NULL)
+		{
+			free(dataBlockInfo.pDBSaveData);
+			dataBlockInfo.pDBSaveData = NULL;
+		}
+		dataBlockInfo.pDBSaveData = (unsigned char *)malloc(dataBlockInfo.sourceDataLen - deleteChannelSize);
+		memset(dataBlockInfo.pDBSaveData, 0, dataBlockInfo.sourceDataLen - deleteChannelSize);
+		//copy before tvclone data contain FM TV 
+		unsigned int totalFmCount, totalTvCount;
+		totalTvCount = allChannelVector.size();
+		totalFmCount = dataBlockInfo.pSourceData[MSD3393_FM_CHANNEL_COUNT_HIGH_BYTE_OFFSET] * 256 + dataBlockInfo.pSourceData[MSD3393_FM_CHANNEL_COUNT_LOW_BYTE_OFFSET];
+		/*memcpy(dataBlockInfo.pDBSaveData, dataBlockInfo.pSourceData, MSD3393_DATABASE_HEAD_BYTE_SIZE + MSD3393_FM_CHANNEL_COUNT_BYTE_SIZE + MSD3393_TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*MSD3393_FM_CHANNEL_INFO_BYTE_SIZE);
+		//set tv count
+		dataBlockInfo.pDBSaveData[MSD3393_TV_CHANNEL_COUNT_HIGH_BYTE_OFFSET] = totalTvCount / 256;
+		dataBlockInfo.pDBSaveData[MSD3393_TV_CHANNEL_COUNT_LOW_BYTE_OFFSET] = totalTvCount % 256;
+		nowSaveDataOffset += MSD3393_DATABASE_HEAD_BYTE_SIZE + MSD3393_FM_CHANNEL_COUNT_BYTE_SIZE + MSD3393_TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*MSD3393_FM_CHANNEL_INFO_BYTE_SIZE;
+		//copy tv data
+		for (i = 0; i < allChannelVector.size(); i++)
+		{
+			unsigned int tmpoffset = 0;
+			tmpoffset = MSD3393_DATABASE_HEAD_BYTE_SIZE + MSD3393_FM_CHANNEL_COUNT_BYTE_SIZE + MSD3393_TV_CHANNEL_COUNT_BYTE_SIZE + totalFmCount*MSD3393_FM_CHANNEL_INFO_BYTE_SIZE + allChannelVector[i].tvVirChIdx * MSD3393_TV_CHANNEL_INFO_BYTE_SIZE;
+			memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], &dataBlockInfo.pSourceData[tmpoffset], MSD3393_TV_CHANNEL_INFO_BYTE_SIZE);
+			//set data
+			//
+			nowSaveDataOffset += MSD3393_TV_CHANNEL_INFO_BYTE_SIZE;
+		}*/
+		memcpy(dataBlockInfo.pDBSaveData, dataBlockInfo.pSourceData, dataBlockInfo.tvCloneDataOffset);
+		nowSaveDataOffset += dataBlockInfo.tvCloneDataOffset;
+		//copy clone data
+		memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], dataBlockInfo.pTvCloneData, dataBlockInfo.tv3393ChannelDataOffset - dataBlockInfo.tvCloneDataOffset);
+		nowSaveDataOffset += dataBlockInfo.tv3393ChannelDataOffset - dataBlockInfo.tvCloneDataOffset;
+		//copy tvchannel
+		memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset],dataBlockInfo.p3393TvChannelData , MSD3393_TV_CHANNEL_ALL_DATA_START_BYTE_SIZE + MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_DATA_LEN_BYTE_SIZE + MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_CHECKSUM_BYTE_SIZE);
+		unsigned int totalTvByte = (totalTvCount + 1) * MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+		unsigned int tmpTotalTvByte = totalTvByte;
+		for (i = 1; i <= MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_DATA_LEN_BYTE_SIZE; i++)
+		{
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + MSD3393_TV_CHANNEL_ALL_DATA_START_BYTE_SIZE + MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_DATA_LEN_BYTE_SIZE - i] = tmpTotalTvByte % 256;
+			tmpTotalTvByte /= 256;
+		}
+		nowSaveDataOffset += MSD3393_TV_CHANNEL_ALL_DATA_START_BYTE_SIZE + MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_DATA_LEN_BYTE_SIZE + MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_CHECKSUM_BYTE_SIZE;
+		pTmpData = &(dataBlockInfo.pDBSaveData[nowSaveDataOffset]);
+		pTmpCheckSum = &(dataBlockInfo.pDBSaveData[nowSaveDataOffset - MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_CHECKSUM_BYTE_SIZE]);
+		memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], dataBlockInfo.p3393TvChannelVirtualChannelData, MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE);
+		nowSaveDataOffset += MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+		sort(allChannelVector.begin(), allChannelVector.end(), SortByOldVirChIdx);
+		for (i = 0; i < allChannelVector.size(); i++)
+		{
+			unsigned int tmpoffset = 0;
+			tmpoffset = dataBlockInfo.tv3393ChannelVirtualChannelDataOffset + allChannelVector[i].tvOldVirChIdx * MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+			memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], &dataBlockInfo.pSourceData[tmpoffset], MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE);
+			nowSaveDataOffset += MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+		}
+		unsigned int virChannelCheckSum = TVCalCheckSum(pTmpData, totalTvByte);
+		for (i = 1; i <= MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_CHECKSUM_BYTE_SIZE; i++)
+		{
+			pTmpCheckSum[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_CHECKSUM_BYTE_SIZE - i] = virChannelCheckSum % 256;
+			virChannelCheckSum /= 256;
+		}
+		dataBlockInfo.pDBSaveData[nowSaveDataOffset] = 0x00;
+		nowSaveDataOffset += 1;
+		memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset], dataBlockInfo.p3393TvChannelChannelSettingDataLen, dataBlockInfo.tv3393ChannelChannelSettingDataSize + MSD3393_TVCHANNEL_CHANNEL_SETTING_DATA_LEN_BYTE_SIZE + MSD3393_TVCHANNEL_CHANNEL_SETTING_CHECKSUM_BYTE_SIZE);
+		//db 3393TvChannelChannelSettingData
+		pTmpData = &dataBlockInfo.pDBSaveData[nowSaveDataOffset + MSD3393_TVCHANNEL_CHANNEL_SETTING_DATA_LEN_BYTE_SIZE + MSD3393_TVCHANNEL_CHANNEL_SETTING_CHECKSUM_BYTE_SIZE];
+		pTmpCheckSum = &dataBlockInfo.pDBSaveData[nowSaveDataOffset + MSD3393_TVCHANNEL_CHANNEL_SETTING_DATA_LEN_BYTE_SIZE];
+		nowSaveDataOffset += dataBlockInfo.tv3393ChannelChannelSettingDataSize + MSD3393_TVCHANNEL_CHANNEL_SETTING_DATA_LEN_BYTE_SIZE + MSD3393_TVCHANNEL_CHANNEL_SETTING_CHECKSUM_BYTE_SIZE;
+		dataBlockInfo.pDBSaveData[nowSaveDataOffset] = 0x00;
+		nowSaveDataOffset += 1;
+		memset(pTmpData, 0, MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_COUNT*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE);
+		//update u16MainListSrvNum
+		pTmpData[MSD3393_CHANNEL_SETTING_MAIN_LIST_SRV_NUM_HIGH_BYTE_OFFSET] = totalTvCount / 256;
+		pTmpData[MSD3393_CHANNEL_SETTING_MAIN_LIST_SRV_NUM_LOW_BYTE_OFFSET] = totalTvCount % 256;
+		//update astMainList
+		sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
+		for (i = 0; i < allChannelVector.size(); i++)
+		{
+			memcpy(&pTmpData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + ((i+1)*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE)], 
+				&dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + ((allChannelVector[i].channelOldPos + 1) * MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE)], 
+				MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE);
+			for (j = 0; j < deleteChannelVector.size(); j++)
+			{
+				if (allChannelVector[i].tvOldPhysicalChIdx == deleteChannelVector[j].tvOldPhysicalChIdx)
+				{
+					if (deleteChannelVector[j].tvOldVirChInfoIdx < allChannelVector[i].tvOldVirChInfoIdx)
+					{
+						allChannelVector[i].tvVirChInfoIdx--;
+					}
+				}
+			}
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_BYTE_OFFSET + ((i + 1)*MSD3393_CHANNEL_SETTING_MS_MAINLIST_A_STRUCT_BYTE_SIZE) + 1] = allChannelVector[i].tvVirChInfoIdx;
+		}
+		//update astPhysicalCh
+		sort(allChannelVector.begin(), allChannelVector.end(), SortByOldPhysicalChIdx);
+		/*for (i = 0; i < allChannelVector.size(); i++)
+		{
+			unsigned int tmpNumOfVirCh = 0, tmpVirChInfoStartIdx = 1;
+			tmpNumOfVirCh = dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + allChannelVector[i].tvOldPhysicalChIdx * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE];
+			for (j = 0; j < deleteChannelVector.size(); j++)
+			{
+				if (allChannelVector[i].tvOldPhysicalChIdx == deleteChannelVector[j].tvOldPhysicalChIdx)
+				{
+					tmpNumOfVirCh--;
+				}
+			}
+			for (j = 0; j < allChannelVector.size(); j++)
+			{
+				if (allChannelVector[j].tvOldPhysicalChIdx < allChannelVector[i].tvOldPhysicalChIdx)
+				{
+					tmpVirChInfoStartIdx++;
+				}
+				else
+				{
+					break;
+				}
 
+			}
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + allChannelVector[i].tvOldPhysicalChIdx * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE] = tmpNumOfVirCh;
+			allChannelVector[i].tvVirChInfoStartIdx = tmpVirChInfoStartIdx;
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + allChannelVector[i].tvOldPhysicalChIdx * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 2] = tmpVirChInfoStartIdx%256;
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + allChannelVector[i].tvOldPhysicalChIdx * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 3] = tmpVirChInfoStartIdx / 256;
+		}*/
+		unsigned int tmpVirChInfoStartIdx = 1;
+		for (count = 0; count < MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_COUNT; count++)
+		{
+			unsigned int tmpNumOfVirCh = 0;
+			for (i = 0; i < allChannelVector.size(); i++)
+			{
+				if (allChannelVector[i].tvOldPhysicalChIdx == count)
+				{
+					tmpNumOfVirCh++;
+				}
+			}
+			for (i = 0; i < allChannelVector.size(); i++)
+			{
+				if (allChannelVector[i].tvOldPhysicalChIdx == count)
+				{
+					allChannelVector[i].tvVirChInfoStartIdx = tmpVirChInfoStartIdx;
+				}
+			}
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + count * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE] = tmpNumOfVirCh;
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + count * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 2] = tmpVirChInfoStartIdx % 256;
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_BYTE_OFFSET + count * MSD3393_CHANNEL_SETTING_MS_PHYSICAL_CHANNEL_STRUCT_BYTE_SIZE + 3] = tmpVirChInfoStartIdx / 256;
+			tmpVirChInfoStartIdx += tmpNumOfVirCh;
+		}
+		//update astVirtualChInfo
+		for (i = 0; i < allChannelVector.size(); i++)
+		{
+			allChannelVector[i].tvVirPos = allChannelVector[i].tvVirChInfoStartIdx + allChannelVector[i].tvVirChInfoIdx;
+			memcpy(&pTmpData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE],
+				&dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvOldVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE], MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE);
+			for (j = 0; j < deleteChannelVector.size(); j++)
+			{
+				if (deleteChannelVector[j].tvOldVirChIdx < allChannelVector[i].tvOldVirChIdx)
+				{
+					allChannelVector[i].tvVirChIdx--;
+				}
+			}
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE] = allChannelVector[i].tvVirChIdx % 256;
+			pTmpData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + 1] |= (0X03 & (allChannelVector[i].tvVirChIdx / 256));
+			if (allChannelVector[i].isLock)
+			{
+				pTmpData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_OFFSET] |= MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_BIT;
+			}
+			else
+			{
+				pTmpData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + allChannelVector[i].tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_OFFSET] &= ~MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_BIT;
+			}
+		}
+		//update au8VirChTbl
+		memcpy(&pTmpData[MSD3393_CHANNEL_SETTING_VIR_CH_TBL_BYTE_OFFSET], dataBlockInfo.p3393TvChannelChannelSettingData, MSD3393_CHANNEL_SETTING_VIR_CH_TBL_COUNT);
+		//check sum
+		unsigned int channelSettingCheckSum = TVCalCheckSum(pTmpData, dataBlockInfo.tv3393ChannelChannelSettingDataSize);
+		for (i = 1; i <= MSD3393_TVCHANNEL_CHANNEL_SETTING_CHECKSUM_BYTE_SIZE; i++)
+		{
+			pTmpCheckSum[MSD3393_TVCHANNEL_CHANNEL_SETTING_CHECKSUM_BYTE_SIZE - i] = channelSettingCheckSum % 256;
+			channelSettingCheckSum /= 256;
+		}
+		//copy tvlastchannel
+		memcpy(&dataBlockInfo.pDBSaveData[nowSaveDataOffset],dataBlockInfo.p3393TvLastChannelData,dataBlockInfo.tv3393LastChannelDataSize);
+		nowSaveDataOffset += dataBlockInfo.tv3393LastChannelDataSize;
+		dataBlockInfo.pDBSaveData[nowSaveDataOffset] = 0x00;
+		nowSaveDataOffset += 1;
+		//checksum
+		dataCheckSum = DataCalCheckSum(dataBlockInfo.pDBSaveData,nowSaveDataOffset);
+		for (i = 1; i <= MSD3393_DATABASE_CHECKSUM_BYTE_SIZE; i++)
+		{
+			dataBlockInfo.pDBSaveData[nowSaveDataOffset + MSD3393_DATABASE_CHECKSUM_BYTE_SIZE - i] = dataCheckSum % 256;
+			dataCheckSum /= 256;
+		}
+		sqlite3_stmt *stat = 0;
+		if (sqlite3_prepare(pChannelDataDB, "update SETTINGS SET DATA = ? where FIELDNAME='TunerRawData'", -1, &stat, 0) == SQLITE_OK){
+			if (sqlite3_bind_blob(stat, 1, dataBlockInfo.pDBSaveData, dataBlockInfo.sourceDataLen - deleteChannelSize, NULL) == SQLITE_OK)
+			{
+				if (sqlite3_step(stat) != SQLITE_DONE)
+				{
+					result = FALSE;
+				}
+			}
+			else
+			{
+				result = FALSE;
+			}
+		}
+		else{
+			result = FALSE;
+		}
+		sqlite3_finalize(stat);
+		//free
+		if (dataBlockInfo.pDBSaveData != NULL)
+		{
+			free(dataBlockInfo.pDBSaveData);
+			dataBlockInfo.pDBSaveData = NULL;
+		}
+		sort(allChannelVector.begin(), allChannelVector.end(), SortByPos);
+	}
 	return result;
 }
 BOOL CVTDBUtil::MSD3393ParseRAWData()
@@ -937,7 +1177,7 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		return FALSE;
 	}
 	dataBlockInfo.tv3393ChannelDataSize = dataBlockInfo.tv3393LastChannelDataOffset - dataBlockInfo.tv3393ChannelDataOffset;
-	dataBlockInfo.tv3393LastChannelDataSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tv3393LastChannelDataOffset;
+	dataBlockInfo.tv3393LastChannelDataSize = dataBlockInfo.sourceDataLen - dataBlockInfo.tv3393LastChannelDataOffset - MSD3393_DATABASE_CHECKSUM_BYTE_SIZE - MSD3393_ZERO_END_BYTE_SIZE;
 	dataBlockInfo.p3393TvChannelVirtualChannelDataLen = &dataBlockInfo.p3393TvChannelData[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_HEAD_BYTE_SIZE];
 
 	dataBlockInfo.p3393TvChannelVirtualChannelData = &dataBlockInfo.p3393TvChannelData[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_HEAD_BYTE_SIZE
@@ -950,7 +1190,6 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		+ dataBlockInfo.p3393TvChannelData[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_HEAD_BYTE_SIZE + 1] * 256 * 256
 		+ dataBlockInfo.p3393TvChannelData[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_HEAD_BYTE_SIZE + 2] * 256
 		+ dataBlockInfo.p3393TvChannelData[MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_HEAD_BYTE_SIZE + 3];
-
 	dataBlockInfo.p3393TvChannelChannelSettingDataLen = &dataBlockInfo.p3393TvChannelVirtualChannelData[dataBlockInfo.tv3393ChannelVirtualChannelDataSize + MSD3393_ZERO_END_BYTE_SIZE];
 
 	dataBlockInfo.p3393TvChannelChannelSettingData = &dataBlockInfo.p3393TvChannelVirtualChannelData[dataBlockInfo.tv3393ChannelVirtualChannelDataSize 
@@ -988,9 +1227,13 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		channelInfo.tvMinorNum = virtualInfo.minorNum;
 		memcpy(channelInfo.name, virtualInfo.serviceName, MSD3393_TV_CHANNEL_INFO_SERVICE_NAME_BYTE_SIZE);
 		channelInfo.channelType = virtualInfo.serviceType;
-		channelInfo.isLock = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + i*MSD3393_CHANNEL_SETTING_VIRTUAL_CHANNEL_INFO_BYTE_SIZE + MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_OFFSET] & MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_BIT)?true:false;
+		channelInfo.isLock = (dataBlockInfo.p3393TvChannelChannelSettingData[MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_BYTE_OFFSET + channelInfo.tvVirPos*MSD3393_CHANNEL_SETTING_MS_VIRTUAL_CHANNEL_INFO_STRUCT_BYTE_SIZE + MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_OFFSET] & MSD3393_VIRTUAL_CHANNEL_INFO_IS_LOCK_CH_BYTE_BIT) ? true : false;
+
+		channelInfo.dbChannelItemDataOffset = dataBlockInfo.tv3393ChannelVirtualChannelDataOffset + i*MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+		channelInfo.dbChannelItemDataSize = MSD3393_TVCHANNEL_VIRTUAL_CHANNEL_ITEM_BYTE_SIZE;
+
 		allChannelVector.push_back(channelInfo);
-		printf("pos = %d  tvPhysicalChIdx=%d tvVirChInfoStartIdx=%d tvVirChInfoIdx=%d tvVirPos=%d tvVirChIdx=%d\n", 
+		printf("pos = %d  tvPhysicalChIdx=%d tvVirChInfoStartIdx=%d tvVirChInfoIdx=%d tvVirPos=%d tvVirChIdx=%d\n", \
 			channelInfo.channelPos, channelInfo.tvPhysicalChIdx, channelInfo.tvVirChInfoStartIdx, channelInfo.tvVirChInfoIdx, channelInfo.tvVirPos, channelInfo.tvVirChIdx);
 	}
 	return result;
