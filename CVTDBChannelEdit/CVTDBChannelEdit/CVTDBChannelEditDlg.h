@@ -12,6 +12,7 @@
 // CCVTDBChannelEditDlg 对话框
 #define PATH_NAME_HEAD "File : "
 #define BOARD_TYPE_HEAD "Board : "
+#define MAIN_DIALOG_TITLE "CVTDBChannelEdit(V1.0)"
 class CCVTDBChannelEditDlg : public CDialogEx
 {
 // 构造
