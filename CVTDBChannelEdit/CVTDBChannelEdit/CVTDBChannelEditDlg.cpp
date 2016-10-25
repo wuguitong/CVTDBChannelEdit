@@ -121,7 +121,7 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	freopen_s(&fp, "CONOUT$", "w+t", stdout);*/
 	//debug
 	//SetWindowText
-	SetWindowText(A2T(MAIN_DIALOG_TITLE));
+	SetWindowText(A2T(MAIN_DIALOG_TITLE) + CString("(") + CString(SOFTWARE_VERSION) + CString(")"));
 
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyleEx(ClistCtrlDBData.m_hWnd, LVS_EX_SUBITEMIMAGES, LVS_EX_SUBITEMIMAGES);

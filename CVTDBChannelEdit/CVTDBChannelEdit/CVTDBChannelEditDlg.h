@@ -9,10 +9,14 @@
 #include "CVTDBUtil.h"
 #include "afxwin.h"
 
+#define SOFTWARE_VERSION "V1.0"
+
 // CCVTDBChannelEditDlg 对话框
 #define PATH_NAME_HEAD "File : "
 #define BOARD_TYPE_HEAD "Board : "
-#define MAIN_DIALOG_TITLE "CVTDBChannelEdit(V1.0)"
+#define MAIN_DIALOG_TITLE "CVTDBChannelEdit"
+
+
 class CCVTDBChannelEditDlg : public CDialogEx
 {
 // 构造
