@@ -59,6 +59,7 @@ void CCVTDBChannelEditDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_DB_DATA, ClistCtrlDBData);
 	DDX_Control(pDX, IDC_STATIC_PATH_STR, CStaticPathStr);
+	DDX_Control(pDX, IDC_STATIC_BOARD_TYPE_STR, CStaticBoardTypeStr);
 }
 
 BEGIN_MESSAGE_MAP(CCVTDBChannelEditDlg, CDialogEx)
@@ -154,6 +155,8 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	UpdateList(0);
 	CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD));
 	CStaticPathStr.SetFont(pFont);
+	CStaticBoardTypeStr.SetWindowTextW(A2T(BOARD_TYPE_HEAD));
+	CStaticBoardTypeStr.SetFont(pFont);
 	boardType = BOARD_TYPE_NONE;
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -231,6 +234,18 @@ void CCVTDBChannelEditDlg::OnBnClickedOpendb()
 			pChannelVector = pCVTDBUtil->GetChannelVectorByPos();
 			UpdateList(pChannelVector->size());
 			CStaticPathStr.SetWindowTextW(A2T(PATH_NAME_HEAD) + filePath);
+			switch (boardType)
+			{
+			case BOARD_T_MSD30X_B55TA_TYPE:
+				CStaticBoardTypeStr.SetWindowTextW(A2T(BOARD_TYPE_HEAD) + CString(BOARD_T_MSD30X_B55TA_STR));
+				break;
+			case BOARD_MSD3393_CVT_55A_TYPE:
+				CStaticBoardTypeStr.SetWindowTextW(A2T(BOARD_TYPE_HEAD) + CString(BOARD_MSD3393_CVT_55A_STR));
+				break;
+			default:
+				CStaticBoardTypeStr.SetWindowTextW(A2T(BOARD_TYPE_HEAD));
+				break;
+			}
 			if ((pChannelVector->size() == 0) && result)
 			{
 				MessageBox(_T("There is no channel!"), _T("Prompt"), MB_OK);

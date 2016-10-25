@@ -11,6 +11,7 @@
 
 // CCVTDBChannelEditDlg 对话框
 #define PATH_NAME_HEAD "File : "
+#define BOARD_TYPE_HEAD "Board : "
 class CCVTDBChannelEditDlg : public CDialogEx
 {
 // 构造
@@ -54,4 +55,5 @@ public:
 	BOOL CStringIsAscii(CString str);
 	afx_msg void OnClose();
 	afx_msg void OnHelpAbout();
+	CStatic CStaticBoardTypeStr;
 };
