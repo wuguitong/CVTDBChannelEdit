@@ -304,6 +304,8 @@ class CVTDBUtil
 		BOOL UpdateAtvChannelNo();
 		BOARD_TYPE GetBoardType();
 		const int GetTvNameByteSize(TV_TYPE tvType);
+		BOOL GetDBIsChanged();
+		void SetDBIsChanged(BOOL isChange);
 	private:
 		static CVTDBUtil* pCVTDBUtil;
 		char* pDbFilePath;
@@ -324,5 +326,6 @@ class CVTDBUtil
 		BOOL MSD3393GetChannelIndoByVirChIdx(unsigned int index, MSD3393VirtualChannelInfo & info);
 		unsigned int TVCalCheckSum(BYTE *pBuf, DWORD wBufLen);
 		unsigned int DataCalCheckSum(BYTE *pBuf, DWORD wBufLen);
+		BOOL isDbDataChanged;
 };
 

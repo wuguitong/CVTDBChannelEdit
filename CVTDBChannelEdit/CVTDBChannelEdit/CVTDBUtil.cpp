@@ -68,6 +68,7 @@ CVTDBUtil::CVTDBUtil()
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	isDbDataChanged = FALSE;
 
 	//30X
 	dataBlockInfo.p309AtvChannelData = NULL;
@@ -130,6 +131,7 @@ CVTDBUtil::~CVTDBUtil()
 	pChannelDataDB = NULL;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	isDbDataChanged = FALSE;
 
 	//30X
 	dataBlockInfo.p309AtvChannelData = NULL;
@@ -185,6 +187,7 @@ void CVTDBUtil::InitData()
 	dataBlockInfo.tvSecureChannelEnable = 0;
 	allChannelVector.clear();
 	deleteChannelVector.clear();
+	isDbDataChanged = FALSE;
 
 	//30X
 	dataBlockInfo.p309AtvChannelData = NULL;
@@ -1530,6 +1533,14 @@ const int CVTDBUtil::GetTvNameByteSize(TV_TYPE tvType)
 		break;
 	}
 	return 0;
+}
+BOOL CVTDBUtil::GetDBIsChanged()
+{
+	return isDbDataChanged;
+}
+void CVTDBUtil::SetDBIsChanged(BOOL isChange)
+{
+	isDbDataChanged = isChange;
 }
 unsigned int CVTDBUtil::TVCalCheckSum(BYTE *pBuf, DWORD wBufLen)
 {

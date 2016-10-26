@@ -285,6 +285,7 @@ void CCVTDBChannelEditDlg::OnBnClickedSavedb()
 		if (result)
 		{
 			MessageBox(_T("DB Save Success!"), _T("Prompt"), MB_OK);
+			pCVTDBUtil->SetDBIsChanged(FALSE);
 		}
 		else{
 			AfxMessageBox(A2T("Save DB Fail!"));
@@ -442,11 +443,13 @@ LRESULT CCVTDBChannelEditDlg::OnListClick(WPARAM wParam, LPARAM lParam)
 		{
 			(*pChannelVector)[hit->m_item].isSkip = !(*pChannelVector)[hit->m_item].isSkip;
 			ClistCtrlDBData.RedrawCheckBoxs(hit->m_item, hit->m_item, hit->m_subitem);
+			pCVTDBUtil->SetDBIsChanged(TRUE);
 		}
 		if (hit->m_subitem == CHANNEL_LOCK)
 		{
 			(*pChannelVector)[hit->m_item].isLock = !(*pChannelVector)[hit->m_item].isLock;
 			ClistCtrlDBData.RedrawCheckBoxs(hit->m_item, hit->m_item, hit->m_subitem);
+			pCVTDBUtil->SetDBIsChanged(TRUE);
 		}
 		if (hit->m_subitem == CHANNEL_SELECT)
 		{
@@ -478,6 +481,7 @@ void CCVTDBChannelEditDlg::OnBnClickedButtonDelete()
 		pCVTDBUtil->UpadtePosValueToContinue();
 		pCVTDBUtil->UpdateAtvChannelNo();
 		UpdateList(pChannelVector->size());
+		pCVTDBUtil->SetDBIsChanged(TRUE);
 	}
 	else
 	{
@@ -506,6 +510,7 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 			ClistCtrlDBData.SetItemState((*pChannelVector)[iItem].channelPos, 0, LVIS_SELECTED | LVIS_FOCUSED);
 			pCVTDBUtil->ChangeChannnelPos((*pChannelVector)[iItem].channelPos, pos - 1);
 			UpdateList(pChannelVector->size());
+			pCVTDBUtil->SetDBIsChanged(TRUE);
 		}
 		break;
 	case CHANNEL_NAME:
@@ -522,6 +527,7 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 				else
 				{
 					MApp_TranslateUnicodeToCharTable((BYTE *)(*pChannelVector)[iItem].name, (WORD *)str.GetBuffer(), dtvByteSize);
+					pCVTDBUtil->SetDBIsChanged(TRUE);
 				}
 			}
 			else
@@ -538,6 +544,7 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 				else
 				{
 					strcpy((*pChannelVector)[iItem].name, T2A(str));
+					pCVTDBUtil->SetDBIsChanged(TRUE);
 				}
 			}
 			break;
@@ -555,6 +562,7 @@ void CCVTDBChannelEditDlg::OnEndlabeleditList(NMHDR* pNMHDR, LRESULT* pResult)
 				else
 				{
 					strcpy((*pChannelVector)[iItem].name, T2A(str));
+					pCVTDBUtil->SetDBIsChanged(TRUE);
 				}
 			}
 			break;
@@ -608,7 +616,7 @@ void CCVTDBChannelEditDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	USES_CONVERSION;
-	if (pCVTDBUtil != NULL)
+	if ((pCVTDBUtil != NULL)&&(pCVTDBUtil->GetDBIsChanged() == TRUE))
 	{
 		UINT nRet = MessageBox(_T("Whether to save the database?"), _T("Save DB?"), MB_YESNO);
 		if (nRet == IDYES)
