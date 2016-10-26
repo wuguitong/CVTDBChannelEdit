@@ -139,17 +139,6 @@
     <None Include="res\CVTDBChannelEdit.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\跑步机pc端频道编辑\bmp\bitmap10.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092117.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092215.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092239.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092247.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092256.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092303.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092310.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092337.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092410.bmp" />
-    <Image Include="..\..\..\..\跑步机PC端频道编辑\QQ截图20161026092117.bmp" />
     <Image Include="res\ChangeLockSkip.bmp" />
     <Image Include="res\CVTDBChannelEd.ico" />
     <Image Include="res\CVTDBChannelEdit.ico" />
