@@ -133,7 +133,7 @@ BOOL CCVTDBChannelEditDlg::OnInitDialog()
 	ClistCtrlDBData.InsertColumn(CHANNEL_NAME , _T("Channel Name"), LVCFMT_CENTER, 300);
 	ClistCtrlDBData.InsertColumn(CHANNEL_SKIP , _T("Channel Skip"), LVCFMT_CENTER, 150);
 	ClistCtrlDBData.InsertColumn(CHANNEL_LOCK , _T("Channel Lock"), LVCFMT_CENTER, 150);
-	ClistCtrlDBData.InsertColumn(CHANNEL_TYPE , _T("channel Type"), LVCFMT_CENTER, 150);
+	ClistCtrlDBData.InsertColumn(CHANNEL_TYPE , _T("Channel Type"), LVCFMT_CENTER, 150);
 
 	pFont = new CFont;
 	pFont->CreateFont(20, // nHeight 

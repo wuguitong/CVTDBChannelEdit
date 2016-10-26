@@ -104,5 +104,59 @@
     <Image Include="res\CVTDBChannelEd.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092117.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092215.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092239.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092247.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092256.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092303.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092310.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092337.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\bmp\QQ截图20161026092410.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机pc端频道编辑\bmp\bitmap10.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="..\..\..\..\跑步机PC端频道编辑\QQ截图20161026092117.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\ChangeLockSkip.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\DeleteChannel.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\EditName.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\EditPos.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\ItemDeclare.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\OpenDB.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\SaveDB.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
