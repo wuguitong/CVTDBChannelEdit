@@ -1123,7 +1123,7 @@ BOOL CVTDBUtil::MSD3393SaveDataToDb()
 			dataBlockInfo.pDBSaveData[nowSaveDataOffset + MSD3393_DATABASE_CHECKSUM_BYTE_SIZE - i] = dataCheckSum % 256;
 			dataCheckSum /= 256;
 		}
-		printf("%d %d\n", nowSaveDataOffset, dataBlockInfo.sourceDataLen - deleteChannelSize);
+		//printf("%d %d\n", nowSaveDataOffset, dataBlockInfo.sourceDataLen - deleteChannelSize);
 		//restore data must do 
 		for (i = 0; i < allChannelVector.size(); i++)
 		{
@@ -1377,7 +1377,7 @@ BOOL CVTDBUtil::MSD3393ParseRAWData()
 		}
 		channelInfo.isEffective = ((tmpTbl[tmpCount] & (0x01 << tmpOffset)) == 0) ? false : true;
 		allChannelVector.push_back(channelInfo);
-		printf("pos = %d  tvPhysicalChIdx=%d tvVirChInfoStartIdx=%d tvVirChInfoIdx=%d tvVirPos=%d tvVirChIdx=%d\n", \
+		//printf("pos = %d  tvPhysicalChIdx=%d tvVirChInfoStartIdx=%d tvVirChInfoIdx=%d tvVirPos=%d tvVirChIdx=%d\n", \
 			channelInfo.channelPos, channelInfo.tvPhysicalChIdx, channelInfo.tvVirChInfoStartIdx, channelInfo.tvVirChInfoIdx, channelInfo.tvVirPos, channelInfo.tvVirChIdx);
 	}
 	return result;
